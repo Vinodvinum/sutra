@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SUTRA — Auth Flow</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;900&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:       #05060A;
+  --bg2:      #080B12;
+  --bg3:      #0C1018;
+  --surface:  #111620;
+  --surface2: #181E2C;
+  --border:   rgba(255,220,130,0.07);
+  --border2:  rgba(255,220,130,0.14);
+  --gold:     #D4A853;
+  --gold2:    #F0C97A;
+  --golddim:  rgba(212,168,83,0.10);
+  --goldglow: rgba(212,168,83,0.22);
+  --saffron:  #E8722A;
+  --sacred:   #7B5EA7;
+  --white:    #F2EDE4;
+  --white2:   #A89F94;
+  --white3:   #574F47;
+  --red:      #D45C5C;
+  --green:    #52C97A;
+  --cinzel:   'Cinzel', serif;
+  --cormorant:'Cormorant Garamond', serif;
+  --dm:       'DM Sans', sans-serif;
+}
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+html,body { height:100%; background:#030408; font-family:var(--dm); color:var(--white); overflow:hidden; }
+
+/* ── CANVAS ── */
+#cosmos { position:fixed; inset:0; z-index:0; pointer-events:none; }
+
+/* ── LAYOUT ── */
+.app { position:relative; z-index:1; display:flex; height:100vh; align-items:center; justify-content:center; }
+
+/* ── SCREEN SWITCHER ── */
+.switcher {
+  position:fixed; bottom:28px; left:50%; transform:translateX(-50%);
+  display:flex; gap:6px; flex-wrap:wrap; justify-content:center;
+  z-index:100; background:rgba(5,6,10,0.9);
+  padding:8px; border-radius:20px;
+  border:1px solid var(--border2);
+  backdrop-filter:blur(20px);
+}
+.sw-btn {
+  padding:6px 14px; border-radius:14px;
+  font-family:var(--cinzel); font-size:9px; letter-spacing:1.5px;
+  cursor:pointer; transition:all 0.2s;
+  color:var(--white3); border:none; background:transparent;
+}
+.sw-btn.active { background:var(--golddim); color:var(--gold); border:1px solid var(--border2); }
+.sw-btn:hover { color:var(--white2); }
+
+/* ── PHONE FRAME ── */
+.phone {
+  width:390px; height:820px;
+  background:var(--bg);
+  border-radius:48px;
+  overflow:hidden;
+  position:relative;
+  box-shadow: 0 0 0 1px rgba(255,220,130,0.08),
+              0 40px 120px rgba(0,0,0,0.8),
+              inset 0 0 0 1px rgba(255,220,130,0.04);
+}
+
+/* ── SCREENS ── */
+.screen {
+  position:absolute; inset:0;
+  display:none; flex-direction:column;
+  overflow:hidden; background:var(--bg);
+}
+.screen.active { display:flex; animation:fadeUp 0.4s cubic-bezier(.4,0,.2,1); }
+@keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+
+.scroll { flex:1; overflow-y:auto; scrollbar-width:none; }
+.scroll::-webkit-scrollbar { display:none; }
+
+/* ── STATUS BAR ── */
+.status {
+  height:44px; padding:14px 28px 0;
+  display:flex; justify-content:space-between; align-items:center;
+  flex-shrink:0;
+}
+.status-time { font-family:var(--cinzel); font-size:13px; color:var(--white); }
+.status-icons { font-size:11px; color:var(--white); letter-spacing:2px; }
+
+/* ── COSMOS MINI (inside phone) ── */
+.phone-cosmos {
+  position:absolute; inset:0; pointer-events:none; z-index:0;
+  background: radial-gradient(ellipse at 20% 20%, rgba(212,168,83,0.06) 0%, transparent 50%),
+              radial-gradient(ellipse at 80% 80%, rgba(123,94,167,0.06) 0%, transparent 50%),
+              radial-gradient(ellipse at 50% 50%, rgba(232,114,42,0.03) 0%, transparent 60%);
+}
+.stars-wrap { position:absolute; inset:0; overflow:hidden; }
+.star {
+  position:absolute; border-radius:50%;
+  background:rgba(255,240,200,0.8);
+  animation:twinkle var(--dur,3s) ease-in-out infinite;
+  animation-delay:var(--del,0s);
+}
+@keyframes twinkle { 0%,100%{opacity:0.1;transform:scale(0.8)} 50%{opacity:0.9;transform:scale(1.1)} }
+
+/* ── CONTENT WRAPPER ── */
+.content { position:relative; z-index:1; flex:1; display:flex; flex-direction:column; }
+
+/* ── BACK BTN ── */
+.back-btn {
+  position:absolute; top:52px; left:20px;
+  width:36px; height:36px; border-radius:50%;
+  background:var(--surface); border:1px solid var(--border2);
+  display:flex; align-items:center; justify-content:center;
+  cursor:pointer; z-index:10; font-size:14px; color:var(--gold);
+  transition:all 0.2s;
+}
+.back-btn:hover { background:var(--golddim); }
+
+/* ── TYPOGRAPHY ── */
+.cinzel { font-family:var(--cinzel); }
+.cormorant { font-family:var(--cormorant); }
+
+/* ── BUTTONS ── */
+.btn-gold {
+  width:100%; padding:17px;
+  background:linear-gradient(135deg, var(--gold), var(--gold2));
+  color:#05060A; border:none; border-radius:16px;
+  font-family:var(--cinzel); font-size:13px; font-weight:700;
+  letter-spacing:2px; cursor:pointer; transition:all 0.2s;
+  position:relative; overflow:hidden;
+}
+.btn-gold::after {
+  content:''; position:absolute; inset:0;
+  background:linear-gradient(135deg,rgba(255,255,255,0.1),transparent);
+  opacity:0; transition:opacity 0.2s;
+}
+.btn-gold:hover::after { opacity:1; }
+.btn-gold:active { transform:scale(0.98); }
+
+.btn-outline {
+  width:100%; padding:16px;
+  background:transparent; color:var(--gold);
+  border:1px solid var(--border2); border-radius:16px;
+  font-family:var(--cinzel); font-size:12px; font-weight:600;
+  letter-spacing:1.5px; cursor:pointer; transition:all 0.2s;
+}
+.btn-outline:hover { background:var(--golddim); }
+
+.btn-google {
+  width:100%; padding:14px;
+  background:var(--surface); color:var(--white2);
+  border:1px solid var(--border2); border-radius:16px;
+  font-family:var(--dm); font-size:13px; font-weight:500;
+  cursor:pointer; transition:all 0.2s;
+  display:flex; align-items:center; justify-content:center; gap:10px;
+}
+.btn-google:hover { border-color:rgba(255,220,130,0.3); color:var(--white); }
+.google-icon { font-size:16px; }
+
+/* ── INPUT ── */
+.input-wrap { margin-bottom:14px; }
+.input-label {
+  font-family:var(--cinzel); font-size:9px; letter-spacing:2px;
+  color:var(--gold); text-transform:uppercase; margin-bottom:7px;
+  display:block;
+}
+.input-field-wrap { position:relative; }
+.input-field {
+  width:100%; padding:14px 16px;
+  background:var(--surface); color:var(--white);
+  border:1px solid var(--border2); border-radius:14px;
+  font-family:var(--dm); font-size:14px; outline:none;
+  transition:border-color 0.2s, box-shadow 0.2s;
+}
+.input-field::placeholder { color:var(--white3); }
+.input-field:focus {
+  border-color:rgba(212,168,83,0.5);
+  box-shadow:0 0 0 3px rgba(212,168,83,0.08);
+}
+.eye-btn {
+  position:absolute; right:14px; top:50%; transform:translateY(-50%);
+  background:none; border:none; cursor:pointer;
+  color:var(--white3); font-size:14px; padding:4px;
+  transition:color 0.2s;
+}
+.eye-btn:hover { color:var(--gold); }
+
+/* ── ERROR/SUCCESS MSG ── */
+.error-msg {
+  font-size:12px; color:var(--red); margin-top:10px;
+  font-family:var(--dm); text-align:center; display:none;
+}
+.error-msg.show { display:block; animation:fadeUp 0.3s ease; }
+.success-msg {
+  font-size:13px; color:var(--green); margin-top:10px;
+  font-family:var(--cormorant); font-style:italic;
+  text-align:center; display:none;
+}
+.success-msg.show { display:block; animation:fadeUp 0.3s ease; }
+
+/* ── DIVIDER ── */
+.divider {
+  display:flex; align-items:center; gap:12px;
+  margin:16px 0; font-family:var(--cormorant);
+  font-style:italic; font-size:13px; color:var(--white3);
+}
+.divider::before, .divider::after {
+  content:''; flex:1; height:1px; background:var(--border2);
+}
+
+/* ── LINK TEXT ── */
+.link-text {
+  text-align:center; font-size:13px; color:var(--white3);
+  font-family:var(--dm); margin-top:16px;
+}
+.link-text span { color:var(--gold); cursor:pointer; }
+.link-text span:hover { text-decoration:underline; }
+
+/* ── LOADING SPINNER ── */
+.spinner {
+  width:18px; height:18px; border-radius:50%;
+  border:2px solid rgba(5,6,10,0.3);
+  border-top-color:#05060A;
+  animation:spin 0.7s linear infinite;
+  display:inline-block; vertical-align:middle; margin-right:8px;
+}
+@keyframes spin { to{transform:rotate(360deg)} }
+
+/* ══════════════════════════════
+   WELCOME SCREEN
+══════════════════════════════ */
+#s-welcome .content {
+  align-items:center; justify-content:center;
+  padding:40px 32px; text-align:center;
+}
+.om-ring-wrap {
+  position:relative; width:180px; height:180px;
+  margin-bottom:32px;
+}
+.om-ring-svg { position:absolute; inset:0; animation:rotate-slow 20s linear infinite; }
+@keyframes rotate-slow { to{transform:rotate(360deg)} }
+.om-symbol {
+  position:absolute; top:50%; left:50%;
+  transform:translate(-50%,-50%);
+  font-size:64px; color:var(--gold);
+  filter:drop-shadow(0 0 20px rgba(212,168,83,0.7));
+  animation:om-pulse 3s ease-in-out infinite;
+  line-height:1;
+}
+@keyframes om-pulse { 0%,100%{transform:translate(-50%,-50%) scale(1);filter:drop-shadow(0 0 20px rgba(212,168,83,0.7))} 50%{transform:translate(-50%,-50%) scale(1.08);filter:drop-shadow(0 0 32px rgba(212,168,83,0.9))} }
+.welcome-logo {
+  font-family:var(--cinzel); font-size:44px; font-weight:900;
+  color:var(--gold); letter-spacing:8px; margin-bottom:6px;
+  filter:drop-shadow(0 0 12px rgba(212,168,83,0.3));
+}
+.welcome-tagline {
+  font-family:var(--cormorant); font-style:italic;
+  font-size:15px; color:var(--white3); letter-spacing:2px;
+  margin-bottom:48px;
+}
+.welcome-btns { width:100%; display:flex; flex-direction:column; gap:12px; }
+
+/* ══════════════════════════════
+   LOGIN SCREEN
+══════════════════════════════ */
+#s-login .scroll { padding:0 28px 40px; }
+.login-top { text-align:center; padding:64px 0 28px; }
+.login-om { font-size:28px; color:var(--gold); display:block; margin-bottom:14px; filter:drop-shadow(0 0 10px rgba(212,168,83,0.6)); animation:om-pulse 3s ease-in-out infinite; }
+.screen-title { font-family:var(--cinzel); font-size:22px; font-weight:700; letter-spacing:3px; color:var(--white); margin-bottom:6px; }
+.screen-subtitle { font-family:var(--cormorant); font-style:italic; font-size:15px; color:var(--white3); }
+.form-section { margin-top:24px; }
+.forgot-link { text-align:right; margin-top:8px; margin-bottom:4px; }
+.forgot-link span { font-size:12px; color:var(--gold); cursor:pointer; font-family:var(--dm); }
+.forgot-link span:hover { text-decoration:underline; }
+
+/* ══════════════════════════════
+   SIGNUP SCREEN
+══════════════════════════════ */
+#s-signup .scroll { padding:0 28px 40px; }
+.signup-top { text-align:center; padding:64px 0 24px; }
+
+/* ══════════════════════════════
+   FORGOT PASSWORD
+══════════════════════════════ */
+#s-forgot .scroll { padding:0 28px 40px; }
+.forgot-top { text-align:center; padding:80px 0 32px; }
+.forgot-icon { font-size:44px; margin-bottom:16px; display:block; animation:om-pulse 3s ease-in-out infinite; }
+.success-state { text-align:center; padding:20px 0; display:none; }
+.success-state.show { display:block; animation:fadeUp 0.5s ease; }
+.success-checkmark { font-size:52px; margin-bottom:16px; display:block; }
+.success-title { font-family:var(--cinzel); font-size:18px; color:var(--green); letter-spacing:2px; margin-bottom:8px; }
+.success-desc { font-family:var(--cormorant); font-style:italic; font-size:15px; color:var(--white2); line-height:1.6; }
+
+/* ══════════════════════════════
+   GOALS SETUP
+══════════════════════════════ */
+#s-goals .scroll { padding:0 28px 40px; }
+.goals-top { text-align:center; padding:64px 0 24px; }
+.goals-num { font-family:var(--cinzel); font-size:11px; color:var(--white3); letter-spacing:2px; margin-bottom:12px; }
+.pillar-chips { display:flex; flex-wrap:wrap; gap:8px; margin:16px 0 24px; }
+.pillar-chip {
+  flex:1; min-width:calc(50% - 4px);
+  padding:12px 8px; border-radius:14px; text-align:center;
+  border:1px solid var(--border2); background:var(--surface);
+  cursor:pointer; transition:all 0.2s;
+}
+.pillar-chip.selected { background:var(--golddim); border-color:var(--gold); }
+.chip-icon { font-size:18px; display:block; margin-bottom:5px; }
+.chip-name { font-family:var(--cinzel); font-size:10px; letter-spacing:1.5px; color:var(--white3); }
+.chip-sanskrit { font-family:var(--cormorant); font-style:italic; font-size:12px; color:var(--white3); margin-top:2px; }
+.pillar-chip.selected .chip-name { color:var(--gold); }
+.pillar-chip.selected .chip-sanskrit { color:var(--gold2); }
+.selection-note { font-size:11px; color:var(--white3); text-align:center; margin-bottom:16px; font-family:var(--dm); }
+
+/* ══════════════════════════════
+   BASELINE WEEK
+══════════════════════════════ */
+#s-baseline .content { align-items:center; justify-content:center; padding:40px 28px; text-align:center; }
+.baseline-om { font-size:40px; color:var(--gold); display:block; margin-bottom:20px; filter:drop-shadow(0 0 16px rgba(212,168,83,0.7)); animation:om-pulse 3s ease-in-out infinite; }
+.baseline-title { font-family:var(--cinzel); font-size:18px; font-weight:700; letter-spacing:3px; color:var(--white); margin-bottom:4px; }
+.baseline-subtitle { font-family:var(--cormorant); font-style:italic; font-size:13px; color:var(--white3); margin-bottom:24px; }
+.big-seven { font-family:var(--cinzel); font-size:96px; font-weight:900; color:var(--gold); line-height:1; filter:drop-shadow(0 0 20px rgba(212,168,83,0.5)); margin-bottom:4px; }
+.big-seven-label { font-family:var(--cinzel); font-size:11px; letter-spacing:3px; color:var(--white3); margin-bottom:24px; }
+.baseline-desc {
+  font-family:var(--cormorant); font-style:italic;
+  font-size:15px; color:var(--white2); line-height:1.75;
+  margin-bottom:28px; max-width:300px;
+}
+.tracking-list { width:100%; margin-bottom:32px; }
+.tracking-item {
+  display:flex; align-items:center; gap:14px;
+  padding:12px 16px; margin-bottom:8px;
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:14px; text-align:left;
+}
+.tracking-icon { font-size:20px; flex-shrink:0; }
+.tracking-text { font-family:var(--cormorant); font-size:15px; color:var(--white2); }
+.tracking-text span { display:block; font-size:11px; color:var(--white3); font-style:italic; margin-top:1px; }
+</style>
+</head>
+<body>
+
+<canvas id="cosmos"></canvas>
+
+<div class="app">
+
+<!-- SCREEN SWITCHER -->
+<div class="switcher">
+  <button class="sw-btn active" onclick="showScreen('welcome',this)">WELCOME</button>
+  <button class="sw-btn" onclick="showScreen('login',this)">LOGIN</button>
+  <button class="sw-btn" onclick="showScreen('signup',this)">SIGN UP</button>
+  <button class="sw-btn" onclick="showScreen('forgot',this)">FORGOT</button>
+  <button class="sw-btn" onclick="showScreen('goals',this)">GOALS</button>
+  <button class="sw-btn" onclick="showScreen('baseline',this)">BASELINE</button>
+</div>
+
+<!-- PHONE -->
+<div class="phone">
+
+  <!-- ══ WELCOME ══ -->
+  <div class="screen active" id="s-welcome">
+    <div class="phone-cosmos"></div>
+    <div class="stars-wrap" id="stars-welcome"></div>
+    <div class="status"><span class="status-time">9:41</span><span class="status-icons">●●● ▌</span></div>
+    <div class="content">
+      <div class="om-ring-wrap">
+        <svg class="om-ring-svg" viewBox="0 0 180 180">
+          <circle cx="90" cy="90" r="82" fill="none" stroke="rgba(212,168,83,0.12)" stroke-width="1" stroke-dasharray="6 10"/>
+          <circle cx="90" cy="90" r="70" fill="none" stroke="rgba(212,168,83,0.08)" stroke-width="1" stroke-dasharray="3 8"/>
+          <g opacity="0.2" transform="translate(90,90)">
+            <ellipse rx="5" ry="12" fill="var(--gold)" transform="rotate(0) translate(0,-62)"/>
+            <ellipse rx="5" ry="12" fill="var(--gold)" transform="rotate(45) translate(0,-62)"/>
+            <ellipse rx="5" ry="12" fill="var(--gold)" transform="rotate(90) translate(0,-62)"/>
+            <ellipse rx="5" ry="12" fill="var(--gold)" transform="rotate(135) translate(0,-62)"/>
+            <ellipse rx="5" ry="12" fill="var(--gold)" transform="rotate(180) translate(0,-62)"/>
+            <ellipse rx="5" ry="12" fill="var(--gold)" transform="rotate(225) translate(0,-62)"/>
+            <ellipse rx="5" ry="12" fill="var(--gold)" transform="rotate(270) translate(0,-62)"/>
+            <ellipse rx="5" ry="12" fill="var(--gold)" transform="rotate(315) translate(0,-62)"/>
+          </g>
+          <!-- Score arc decoration -->
+          <circle cx="90" cy="90" r="82" fill="none" stroke="url(#wg)" stroke-width="2" stroke-linecap="round" stroke-dasharray="200 315" transform="rotate(-90 90 90)" opacity="0.4"/>
+          <defs>
+            <linearGradient id="wg" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" style="stop-color:#D4A853"/>
+              <stop offset="100%" style="stop-color:#F0C97A"/>
+            </linearGradient>
+          </defs>
+        </svg>
+        <div class="om-symbol">ॐ</div>
+      </div>
+      <div class="welcome-logo">SUTRA</div>
+      <div class="welcome-tagline">dharma • karma • moksha</div>
+      <div class="welcome-btns">
+        <button class="btn-gold" onclick="showScreen('signup', document.querySelector('.sw-btn:nth-child(3)'))">BEGIN YOUR JOURNEY</button>
+        <button class="btn-outline" onclick="showScreen('login', document.querySelector('.sw-btn:nth-child(2)'))">I HAVE AN ACCOUNT</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ LOGIN ══ -->
+  <div class="screen" id="s-login">
+    <div class="phone-cosmos"></div>
+    <div class="stars-wrap" id="stars-login"></div>
+    <div class="status"><span class="status-time">9:41</span><span class="status-icons">●●● ▌</span></div>
+    <div class="back-btn" onclick="showScreen('welcome', document.querySelector('.sw-btn:nth-child(1)'))">←</div>
+    <div class="content">
+      <div class="scroll">
+        <div class="login-top">
+          <span class="login-om">ॐ</span>
+          <div class="screen-title">WELCOME BACK</div>
+          <div class="screen-subtitle">पुनरागमन — Return to the path</div>
+        </div>
+        <div class="form-section">
+          <div class="input-wrap">
+            <label class="input-label">Email Address</label>
+            <div class="input-field-wrap">
+              <input class="input-field" type="email" placeholder="your@email.com" id="login-email"/>
+            </div>
+          </div>
+          <div class="input-wrap">
+            <label class="input-label">Password</label>
+            <div class="input-field-wrap">
+              <input class="input-field" type="password" placeholder="Your sacred key" id="login-pass" style="padding-right:44px"/>
+              <button class="eye-btn" onclick="toggleEye('login-pass',this)">👁</button>
+            </div>
+          </div>
+          <div class="forgot-link">
+            <span onclick="showScreen('forgot', document.querySelector('.sw-btn:nth-child(4)'))">Forgot Password?</span>
+          </div>
+          <button class="btn-gold" id="login-btn" onclick="handleLogin()" style="margin-top:8px">LOGIN</button>
+          <div class="error-msg" id="login-error">Incorrect email or password. Try again.</div>
+          <div class="divider">or continue with</div>
+          <button class="btn-google" onclick="handleGoogle()">
+            <span class="google-icon">G</span>
+            Continue with Google
+          </button>
+          <div class="link-text" style="margin-top:20px">
+            New to SUTRA? <span onclick="showScreen('signup', document.querySelector('.sw-btn:nth-child(3)'))">Begin your journey</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SIGNUP ══ -->
+  <div class="screen" id="s-signup">
+    <div class="phone-cosmos"></div>
+    <div class="stars-wrap" id="stars-signup"></div>
+    <div class="status"><span class="status-time">9:41</span><span class="status-icons">●●● ▌</span></div>
+    <div class="back-btn" onclick="showScreen('welcome', document.querySelector('.sw-btn:nth-child(1)'))">←</div>
+    <div class="content">
+      <div class="scroll">
+        <div class="signup-top">
+          <div class="screen-title">CREATE ACCOUNT</div>
+          <div class="screen-subtitle">आरंभ — The beginning</div>
+        </div>
+        <div class="form-section">
+          <div class="input-wrap">
+            <label class="input-label">Full Name</label>
+            <div class="input-field-wrap">
+              <input class="input-field" type="text" placeholder="Your true name" id="signup-name"/>
+            </div>
+          </div>
+          <div class="input-wrap">
+            <label class="input-label">Email Address</label>
+            <div class="input-field-wrap">
+              <input class="input-field" type="email" placeholder="your@email.com" id="signup-email"/>
+            </div>
+          </div>
+          <div class="input-wrap">
+            <label class="input-label">Password</label>
+            <div class="input-field-wrap">
+              <input class="input-field" type="password" placeholder="Min 8 characters" id="signup-pass" style="padding-right:44px"/>
+              <button class="eye-btn" onclick="toggleEye('signup-pass',this)">👁</button>
+            </div>
+          </div>
+          <div class="input-wrap">
+            <label class="input-label">Confirm Password</label>
+            <div class="input-field-wrap">
+              <input class="input-field" type="password" placeholder="Repeat your key" id="signup-confirm" style="padding-right:44px"/>
+              <button class="eye-btn" onclick="toggleEye('signup-confirm',this)">👁</button>
+            </div>
+          </div>
+          <button class="btn-gold" id="signup-btn" onclick="handleSignup()" style="margin-top:8px">CREATE ACCOUNT</button>
+          <div class="error-msg" id="signup-error"></div>
+          <div class="divider">or</div>
+          <button class="btn-google" onclick="handleGoogle()">
+            <span class="google-icon">G</span>
+            Sign up with Google
+          </button>
+          <div class="link-text" style="margin-top:16px">
+            Already have an account? <span onclick="showScreen('login', document.querySelector('.sw-btn:nth-child(2)'))">Login</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ FORGOT PASSWORD ══ -->
+  <div class="screen" id="s-forgot">
+    <div class="phone-cosmos"></div>
+    <div class="stars-wrap" id="stars-forgot"></div>
+    <div class="status"><span class="status-time">9:41</span><span class="status-icons">●●● ▌</span></div>
+    <div class="back-btn" onclick="showScreen('login', document.querySelector('.sw-btn:nth-child(2)'))">←</div>
+    <div class="content">
+      <div class="scroll">
+        <div class="forgot-top">
+          <span class="forgot-icon">🔑</span>
+          <div class="screen-title">RESET PATH</div>
+          <div class="screen-subtitle" style="font-family:var(--cormorant);font-style:italic;font-size:14px;color:var(--white3);margin-top:6px;line-height:1.6">We will send a sacred reset link<br>to your email address</div>
+        </div>
+        <div class="form-section" id="forgot-form">
+          <div class="input-wrap">
+            <label class="input-label">Email Address</label>
+            <div class="input-field-wrap">
+              <input class="input-field" type="email" placeholder="your@email.com" id="forgot-email"/>
+            </div>
+          </div>
+          <button class="btn-gold" id="forgot-btn" onclick="handleForgot()" style="margin-top:8px">SEND RESET LINK</button>
+          <div class="error-msg" id="forgot-error">Please enter a valid email address.</div>
+        </div>
+        <div class="success-state" id="forgot-success">
+          <span class="success-checkmark">✉️</span>
+          <div class="success-title">LINK SENT</div>
+          <div class="success-desc">Check your email. The reset link will guide you back to your path.</div>
+          <button class="btn-outline" onclick="showScreen('login', document.querySelector('.sw-btn:nth-child(2)'))" style="margin-top:24px">BACK TO LOGIN</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ GOALS SETUP ══ -->
+  <div class="screen" id="s-goals">
+    <div class="phone-cosmos"></div>
+    <div class="stars-wrap" id="stars-goals"></div>
+    <div class="status"><span class="status-time">9:41</span><span class="status-icons">●●● ▌</span></div>
+    <div class="content">
+      <div class="scroll">
+        <div class="goals-top">
+          <div class="goals-num">STEP 1 OF 2</div>
+          <div class="screen-title">YOUR DHARMA GOALS</div>
+          <div class="screen-subtitle">What are you here to master?</div>
+        </div>
+        <div style="padding:0 28px">
+          <div class="input-wrap">
+            <label class="input-label">Goal 1 — Primary Mission *</label>
+            <div class="input-field-wrap">
+              <input class="input-field" type="text" placeholder="e.g. Build unbreakable discipline" id="goal1"/>
+            </div>
+          </div>
+          <div class="input-wrap">
+            <label class="input-label">Goal 2 — Second Focus</label>
+            <div class="input-field-wrap">
+              <input class="input-field" type="text" placeholder="e.g. Reach financial freedom" id="goal2"/>
+            </div>
+          </div>
+          <div class="input-wrap">
+            <label class="input-label">Goal 3 — Third Commitment</label>
+            <div class="input-field-wrap">
+              <input class="input-field" type="text" placeholder="e.g. Master a new skill" id="goal3"/>
+            </div>
+          </div>
+
+          <div style="margin-top:8px;margin-bottom:6px">
+            <div style="font-family:var(--cinzel);font-size:9px;letter-spacing:2px;color:var(--gold);margin-bottom:4px">SELECT YOUR PILLARS *</div>
+            <div class="selection-note">Choose at least 2 areas to track</div>
+          </div>
+
+          <div class="pillar-chips">
+            <div class="pillar-chip selected" onclick="toggleChip(this)">
+              <span class="chip-icon">🔱</span>
+              <div class="chip-name">TAPAS</div>
+              <div class="chip-sanskrit">Discipline</div>
+            </div>
+            <div class="pillar-chip selected" onclick="toggleChip(this)">
+              <span class="chip-icon">💚</span>
+              <div class="chip-name">ĀROGYA</div>
+              <div class="chip-sanskrit">Health</div>
+            </div>
+            <div class="pillar-chip" onclick="toggleChip(this)">
+              <span class="chip-icon">💫</span>
+              <div class="chip-name">ARTHA</div>
+              <div class="chip-sanskrit">Finance</div>
+            </div>
+            <div class="pillar-chip" onclick="toggleChip(this)">
+              <span class="chip-icon">🪷</span>
+              <div class="chip-name">VIDYĀ</div>
+              <div class="chip-sanskrit">Growth</div>
+            </div>
+          </div>
+
+          <div class="error-msg" id="goals-error" style="margin-bottom:12px"></div>
+          <button class="btn-gold" onclick="handleGoals()">NEXT — BASELINE WEEK →</button>
+          <div style="height:20px"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ BASELINE WEEK ══ -->
+  <div class="screen" id="s-baseline">
+    <div class="phone-cosmos"></div>
+    <div class="stars-wrap" id="stars-baseline"></div>
+    <div class="status"><span class="status-time">9:41</span><span class="status-icons">●●● ▌</span></div>
+    <div class="content">
+      <div style="padding:44px 28px;display:flex;flex-direction:column;align-items:center;text-align:center;flex:1;overflow-y:auto;scrollbar-width:none">
+        <div style="font-family:var(--cinzel);font-size:9px;letter-spacing:2px;color:var(--white3);margin-bottom:16px">STEP 2 OF 2</div>
+        <span class="baseline-om">ॐ</span>
+        <div class="baseline-title">THE WATCHING WEEK</div>
+        <div class="baseline-subtitle">पर्यवेक्षण काल — Observation period</div>
+        <div class="big-seven">7</div>
+        <div class="big-seven-label">DAYS OF SILENCE</div>
+        <div class="baseline-desc">
+          SUTRA will observe your patterns silently for 7 days before calculating your first Life Score. Simply log your daily activities. Your dharmic journey begins now.
+        </div>
+        <div class="tracking-list">
+          <div class="tracking-item">
+            <span class="tracking-icon">🔱</span>
+            <div class="tracking-text">Discipline patterns<span>Task completion, focus time</span></div>
+          </div>
+          <div class="tracking-item">
+            <span class="tracking-icon">💚</span>
+            <div class="tracking-text">Sleep and movement<span>Hours, consistency, exercise</span></div>
+          </div>
+          <div class="tracking-item">
+            <span class="tracking-icon">💫</span>
+            <div class="tracking-text">Spending behavior<span>Needs, wants, waste patterns</span></div>
+          </div>
+          <div class="tracking-item">
+            <span class="tracking-icon">🪷</span>
+            <div class="tracking-text">Learning habits<span>Reading, courses, reflection</span></div>
+          </div>
+        </div>
+        <button class="btn-gold" style="width:100%" onclick="handleBaseline()">I UNDERSTAND — BEGIN ✦</button>
+        <div style="height:20px"></div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- end phone -->
+</div><!-- end app -->
+
+<script>
+// ── COSMOS CANVAS ──
+const canvas = document.getElementById('cosmos');
+const ctx = canvas.getContext('2d');
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+const stars = Array.from({length:200},()=>({
+  x:Math.random()*canvas.width, y:Math.random()*canvas.height,
+  r:Math.random()*1.2+0.2, a:Math.random(),
+  da:Math.random()*0.004+0.001, dir:Math.random()>0.5?1:-1
+}));
+const nebs = Array.from({length:20},()=>({
+  x:Math.random()*canvas.width, y:Math.random()*canvas.height,
+  r:Math.random()*80+40, a:Math.random()*0.04+0.01,
+  vx:(Math.random()-0.5)*0.2, vy:(Math.random()-0.5)*0.2,
+  hue:Math.random()>0.6?35:270
+}));
+function draw(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  nebs.forEach(n=>{
+    const g=ctx.createRadialGradient(n.x,n.y,0,n.x,n.y,n.r);
+    g.addColorStop(0,`hsla(${n.hue},55%,38%,${n.a})`);
+    g.addColorStop(1,'transparent');
+    ctx.fillStyle=g;
+    ctx.fillRect(n.x-n.r,n.y-n.r,n.r*2,n.r*2);
+    n.x+=n.vx; n.y+=n.vy;
+    if(n.x<-n.r)n.x=canvas.width+n.r;
+    if(n.x>canvas.width+n.r)n.x=-n.r;
+    if(n.y<-n.r)n.y=canvas.height+n.r;
+    if(n.y>canvas.height+n.r)n.y=-n.r;
+  });
+  stars.forEach(s=>{
+    s.a+=s.da*s.dir; if(s.a>1||s.a<0.08)s.dir*=-1;
+    ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+    ctx.fillStyle=`rgba(255,240,200,${s.a})`; ctx.fill();
+  });
+  requestAnimationFrame(draw);
+}
+draw();
+window.addEventListener('resize',()=>{canvas.width=window.innerWidth;canvas.height=window.innerHeight;});
+
+// ── STARS INSIDE PHONE ──
+function generateStars(containerId) {
+  const wrap = document.getElementById(containerId);
+  if(!wrap) return;
+  for(let i=0;i<60;i++){
+    const s=document.createElement('div');
+    s.className='star';
+    const size=Math.random()*1.5+0.5;
+    s.style.cssText=`
+      width:${size}px;height:${size}px;
+      left:${Math.random()*100}%;top:${Math.random()*100}%;
+      --dur:${2+Math.random()*4}s;
+      --del:${Math.random()*4}s;
+      opacity:${Math.random()*0.6+0.2};
+    `;
+    wrap.appendChild(s);
+  }
+}
+['welcome','login','signup','forgot','goals','baseline'].forEach(id=>generateStars('stars-'+id));
+
+// ── SCREEN SWITCHER ──
+function showScreen(id, btn) {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.sw-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('s-'+id).classList.add('active');
+  if(btn) btn.classList.add('active');
+  else {
+    const map={welcome:0,login:1,signup:2,forgot:3,goals:4,baseline:5};
+    const btns=document.querySelectorAll('.sw-btn');
+    if(btns[map[id]]) btns[map[id]].classList.add('active');
+  }
+}
+
+// ── EYE TOGGLE ──
+function toggleEye(inputId, btn) {
+  const inp=document.getElementById(inputId);
+  if(inp.type==='password'){inp.type='text';btn.textContent='🙈';}
+  else{inp.type='password';btn.textContent='👁';}
+}
+
+// ── CHIP TOGGLE ──
+function toggleChip(chip) {
+  const chips=document.querySelectorAll('.pillar-chip');
+  const selected=[...chips].filter(c=>c.classList.contains('selected'));
+  if(chip.classList.contains('selected') && selected.length<=2) return; // min 2
+  chip.classList.toggle('selected');
+}
+
+// ── LOADING STATE ──
+function setLoading(btnId, loading) {
+  const btn=document.getElementById(btnId);
+  if(loading){
+    btn.innerHTML='<span class="spinner"></span>PROCESSING...';
+    btn.disabled=true; btn.style.opacity='0.8';
+  } else {
+    btn.disabled=false; btn.style.opacity='1';
+  }
+}
+
+// ── LOGIN HANDLER ──
+function handleLogin() {
+  const email=document.getElementById('login-email').value;
+  const pass=document.getElementById('login-pass').value;
+  const err=document.getElementById('login-error');
+  err.classList.remove('show');
+  if(!email||!pass){ err.textContent='Please fill in all fields.'; err.classList.add('show'); return; }
+  setLoading('login-btn',true);
+  setTimeout(()=>{
+    setLoading('login-btn',false);
+    document.getElementById('login-btn').textContent='LOGIN';
+    // Simulate: show error or success
+    if(pass.length < 3) {
+      err.classList.add('show');
+    } else {
+      // success — go to main app (show goals for demo)
+      showScreen('goals');
+    }
+  },1800);
+}
+
+// ── SIGNUP HANDLER ──
+function handleSignup() {
+  const name=document.getElementById('signup-name').value.trim();
+  const email=document.getElementById('signup-email').value.trim();
+  const pass=document.getElementById('signup-pass').value;
+  const confirm=document.getElementById('signup-confirm').value;
+  const err=document.getElementById('signup-error');
+  err.classList.remove('show');
+  if(!name){err.textContent='Please enter your name.';err.classList.add('show');return;}
+  if(!email||!email.includes('@')){err.textContent='Please enter a valid email.';err.classList.add('show');return;}
+  if(pass.length<8){err.textContent='Password must be at least 8 characters.';err.classList.add('show');return;}
+  if(pass!==confirm){err.textContent='Passwords do not match.';err.classList.add('show');return;}
+  setLoading('signup-btn',true);
+  setTimeout(()=>{
+    setLoading('signup-btn',false);
+    document.getElementById('signup-btn').textContent='CREATE ACCOUNT';
+    showScreen('goals');
+  },1800);
+}
+
+// ── FORGOT HANDLER ──
+function handleForgot() {
+  const email=document.getElementById('forgot-email').value.trim();
+  const err=document.getElementById('forgot-error');
+  err.classList.remove('show');
+  if(!email||!email.includes('@')){err.classList.add('show');return;}
+  setLoading('forgot-btn',true);
+  setTimeout(()=>{
+    document.getElementById('forgot-form').style.display='none';
+    document.getElementById('forgot-success').classList.add('show');
+  },1600);
+}
+
+// ── GOALS HANDLER ──
+function handleGoals() {
+  const goal1=document.getElementById('goal1').value.trim();
+  const selected=document.querySelectorAll('.pillar-chip.selected').length;
+  const err=document.getElementById('goals-error');
+  err.classList.remove('show');
+  if(!goal1){err.textContent='Please enter at least your primary mission.';err.classList.add('show');return;}
+  if(selected<2){err.textContent='Please select at least 2 pillars to track.';err.classList.add('show');return;}
+  showScreen('baseline');
+}
+
+// ── BASELINE HANDLER ──
+function handleBaseline() {
+  // In real app: navigate to main app
+  // For demo: go back to welcome
+  showScreen('welcome');
+}
+
+// ── GOOGLE HANDLER ──
+function handleGoogle() {
+  // Demo only
+  setTimeout(()=>showScreen('goals'),500);
+}
+</script>
+</body>
+</html>

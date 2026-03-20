@@ -1,0 +1,1405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SUTRA — Life OS</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;900&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:        #05060A;
+  --bg2:       #080B12;
+  --bg3:       #0C1018;
+  --surface:   #111620;
+  --surface2:  #181E2C;
+  --border:    rgba(255,220,130,0.07);
+  --border2:   rgba(255,220,130,0.14);
+  --gold:      #D4A853;
+  --gold2:     #F0C97A;
+  --gold3:     #FFE4A0;
+  --golddim:   rgba(212,168,83,0.10);
+  --goldglow:  rgba(212,168,83,0.20);
+  --saffron:   #E8722A;
+  --saffron2:  rgba(232,114,42,0.15);
+  --sacred:    #7B5EA7;
+  --sacred2:   rgba(123,94,167,0.15);
+  --white:     #F2EDE4;
+  --white2:    #A89F94;
+  --white3:    #574F47;
+  --red:       #D45C5C;
+  --green:     #52C97A;
+  --blue:      #4E8FD4;
+  --teal:      #3DBFAA;
+  --cinzel:    'Cinzel', serif;
+  --cormorant: 'Cormorant Garamond', serif;
+  --dm:        'DM Sans', sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;background:#030408;font-family:var(--dm);color:var(--white);overflow:hidden;}
+
+/* ═══ CANVAS BACKGROUND ═══ */
+#cosmos{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;}
+
+/* ═══ LAYOUT ═══ */
+.shell{position:relative;z-index:1;display:flex;height:100vh;}
+
+/* ═══ VIEW TOGGLE ═══ */
+.view-toggle{
+  position:fixed;top:18px;left:50%;transform:translateX(-50%);
+  background:rgba(5,6,10,0.9);border:1px solid var(--border2);
+  border-radius:30px;padding:5px;display:flex;gap:4px;z-index:1000;
+  backdrop-filter:blur(20px);
+}
+.vt-btn{
+  padding:7px 20px;border-radius:24px;font-family:var(--cinzel);
+  font-size:11px;letter-spacing:1.5px;cursor:pointer;transition:all 0.3s ease;
+  color:var(--white3);border:none;background:transparent;
+}
+.vt-btn.active{background:var(--golddim);color:var(--gold);border:1px solid var(--border2);}
+
+/* ═══ SIDEBAR ═══ */
+.sidebar{
+  width:220px;flex-shrink:0;
+  background:rgba(8,11,18,0.85);
+  border-right:1px solid var(--border);
+  display:flex;flex-direction:column;
+  padding:80px 0 24px;
+  backdrop-filter:blur(30px);
+  position:relative;
+}
+.sidebar::before{
+  content:'';position:absolute;top:0;right:0;width:1px;height:100%;
+  background:linear-gradient(180deg,transparent,var(--gold) 30%,var(--saffron) 70%,transparent);
+  opacity:0.3;
+}
+.sidebar-om{
+  padding:0 24px 32px;text-align:center;
+}
+.om-symbol{
+  font-size:36px;color:var(--gold);display:block;
+  animation:om-pulse 4s ease-in-out infinite;
+  filter:drop-shadow(0 0 12px rgba(212,168,83,0.6));
+}
+@keyframes om-pulse{0%,100%{transform:scale(1);opacity:1;}50%{transform:scale(1.08);opacity:0.8;}}
+.sidebar-logo{font-family:var(--cinzel);font-size:22px;font-weight:900;color:var(--gold);letter-spacing:4px;margin-top:6px;}
+.sidebar-tagline{font-family:var(--cormorant);font-style:italic;font-size:12px;color:var(--white3);letter-spacing:1px;margin-top:2px;}
+.nav{flex:1;padding-top:8px;}
+.nav-item{
+  display:flex;align-items:center;gap:12px;
+  padding:13px 24px;cursor:pointer;
+  font-family:var(--cinzel);font-size:10px;letter-spacing:2px;
+  color:var(--white3);border-left:2px solid transparent;
+  transition:all 0.25s ease;position:relative;
+}
+.nav-item:hover{color:var(--white2);background:rgba(212,168,83,0.04);}
+.nav-item.active{color:var(--gold);border-left-color:var(--gold);background:var(--golddim);}
+.nav-item.active::after{
+  content:'';position:absolute;right:0;top:50%;transform:translateY(-50%);
+  width:4px;height:60%;background:var(--gold);border-radius:2px 0 0 2px;
+  box-shadow:0 0 8px var(--gold);
+}
+.nav-chakra{font-size:16px;width:20px;text-align:center;}
+.sidebar-mantra{
+  margin:0 16px;padding:14px;
+  border:1px solid var(--border);border-radius:12px;
+  background:var(--golddim);text-align:center;
+}
+.mantra-text{font-family:var(--cormorant);font-style:italic;font-size:13px;color:var(--gold2);line-height:1.6;}
+.mantra-translation{font-size:10px;color:var(--white3);margin-top:4px;letter-spacing:0.5px;}
+
+/* ═══ PHONE FRAME ═══ */
+.phone-frame{
+  position:fixed;right:32px;top:50%;transform:translateY(-50%);
+  width:360px;height:760px;
+  background:rgba(8,11,18,0.92);
+  border-radius:44px;
+  border:1px solid var(--border2);
+  box-shadow:0 0 80px rgba(212,168,83,0.08),0 40px 120px rgba(0,0,0,0.7),inset 0 0 0 1px rgba(255,220,130,0.05);
+  overflow:hidden;
+  backdrop-filter:blur(40px);
+  z-index:10;
+  display:none;
+}
+.phone-frame.visible{display:block;}
+
+/* ═══ MAIN ═══ */
+.main{flex:1;overflow:hidden;display:flex;flex-direction:column;}
+.topbar{
+  height:64px;flex-shrink:0;
+  border-bottom:1px solid var(--border);
+  padding:0 36px;
+  display:flex;align-items:center;justify-content:space-between;
+  background:rgba(8,11,18,0.7);
+  backdrop-filter:blur(20px);
+  margin-top:52px;
+}
+.topbar-left{display:flex;align-items:center;gap:16px;}
+.topbar-title{font-family:var(--cinzel);font-size:16px;font-weight:600;color:var(--white);letter-spacing:2px;}
+.topbar-sanskrit{font-family:var(--cormorant);font-style:italic;font-size:13px;color:var(--white3);}
+.topbar-right{display:flex;align-items:center;gap:14px;}
+.topbar-date{font-size:12px;color:var(--white3);font-weight:300;}
+.streak-pill{
+  background:var(--golddim);border:1px solid var(--border2);
+  padding:6px 14px;border-radius:20px;
+  font-family:var(--cinzel);font-size:11px;font-weight:600;color:var(--gold);
+  letter-spacing:1px;
+}
+.content{flex:1;overflow-y:auto;padding:28px 36px 40px;scrollbar-width:thin;scrollbar-color:var(--surface2) transparent;}
+.content::-webkit-scrollbar{width:3px;}
+.content::-webkit-scrollbar-thumb{background:var(--surface2);border-radius:2px;}
+
+/* ═══ PAGES ═══ */
+.page{display:none;}
+.page.active{display:block;animation:fadeUp 0.4s cubic-bezier(.4,0,.2,1);}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+
+/* ═══ GRID ═══ */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px;}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:18px;}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px;}
+
+/* ═══ CARD BASE ═══ */
+.card{
+  background:rgba(17,22,32,0.8);
+  border:1px solid var(--border);
+  border-radius:20px;padding:22px;
+  position:relative;overflow:hidden;
+  backdrop-filter:blur(10px);
+}
+.card-gold-glow::before{
+  content:'';position:absolute;top:-60px;right:-60px;
+  width:180px;height:180px;
+  background:radial-gradient(circle,var(--goldglow) 0%,transparent 70%);
+  pointer-events:none;
+}
+.card-saffron-glow::before{
+  content:'';position:absolute;top:-60px;left:-60px;
+  width:180px;height:180px;
+  background:radial-gradient(circle,rgba(232,114,42,0.15) 0%,transparent 70%);
+  pointer-events:none;
+}
+.card-sacred-glow::before{
+  content:'';position:absolute;bottom:-40px;right:-40px;
+  width:140px;height:140px;
+  background:radial-gradient(circle,rgba(123,94,167,0.2) 0%,transparent 70%);
+  pointer-events:none;
+}
+.card-label{
+  font-family:var(--cinzel);font-size:9px;font-weight:600;
+  color:var(--white3);text-transform:uppercase;letter-spacing:2px;margin-bottom:16px;
+}
+
+/* ═══ MANDALA SCORE ═══ */
+.score-hero{display:flex;align-items:center;gap:32px;}
+.mandala-wrap{
+  position:relative;width:170px;height:170px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+}
+.mandala-svg{position:absolute;top:0;left:0;width:170px;height:170px;}
+.mandala-ring{fill:none;stroke-width:2;}
+.mandala-score-ring{fill:none;stroke-width:8;stroke-linecap:round;}
+.score-center-web{
+  position:relative;z-index:2;text-align:center;
+}
+.score-num-web{font-family:var(--cinzel);font-size:46px;font-weight:900;color:var(--gold);line-height:1;filter:drop-shadow(0 0 10px rgba(212,168,83,0.5));}
+.score-denom-web{font-size:11px;color:var(--white3);letter-spacing:1px;}
+.score-details-web{flex:1;}
+.score-dharma-label{font-family:var(--cormorant);font-style:italic;font-size:26px;color:var(--gold2);margin-bottom:4px;}
+.score-change-web{font-size:13px;color:var(--green);margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+.score-insight-web{font-size:13px;color:var(--white2);line-height:1.7;font-weight:300;margin-bottom:16px;font-family:var(--cormorant);font-size:15px;}
+.streak-badge-web{
+  display:inline-flex;align-items:center;gap:8px;
+  background:var(--golddim);border:1px solid var(--border2);
+  padding:8px 16px;border-radius:20px;
+  font-family:var(--cinzel);font-size:11px;color:var(--gold);letter-spacing:1px;
+}
+
+/* ═══ CHAKRA PILLARS ═══ */
+.chakra-card{
+  background:rgba(17,22,32,0.7);
+  border:1px solid var(--border);
+  border-radius:18px;padding:18px;
+  text-align:center;position:relative;overflow:hidden;
+  transition:transform 0.2s,border-color 0.2s;
+  cursor:pointer;
+}
+.chakra-card:hover{transform:translateY(-2px);}
+.chakra-symbol{font-size:26px;margin-bottom:8px;display:block;}
+.chakra-num{font-family:var(--cinzel);font-size:28px;font-weight:700;margin-bottom:3px;line-height:1;}
+.chakra-name{font-size:10px;color:var(--white3);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:3px;}
+.chakra-sanskrit{font-family:var(--cormorant);font-style:italic;font-size:12px;margin-bottom:10px;}
+.chakra-bar-track{height:3px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden;}
+.chakra-bar-fill{height:100%;border-radius:2px;transition:width 1s ease;}
+
+/* ═══ YAGNA GRAPH (Flame Chart) ═══ */
+.yagna-graph{position:relative;}
+.flame-wrap{display:flex;align-items:flex-end;gap:6px;height:130px;padding-bottom:4px;}
+.flame-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;position:relative;}
+.flame-bar{
+  width:100%;border-radius:6px 6px 0 0;
+  position:relative;cursor:pointer;transition:all 0.3s ease;
+  overflow:hidden;
+}
+.flame-bar::after{
+  content:'';position:absolute;bottom:0;left:0;right:0;height:40%;
+  background:linear-gradient(0deg,rgba(255,255,255,0.08),transparent);
+}
+.flame-bar:hover{filter:brightness(1.3);}
+.flame-bar.today{box-shadow:0 0 20px currentColor;}
+.flame-val{font-size:9px;color:var(--white3);position:absolute;top:-16px;left:50%;transform:translateX(-50%);white-space:nowrap;}
+.flame-bar.today .flame-val{color:var(--gold);font-weight:600;}
+.flame-day{font-size:9px;color:var(--white3);}
+.graph-tabs-web{display:flex;gap:6px;margin-bottom:14px;}
+.g-tab-web{
+  font-family:var(--cinzel);font-size:9px;letter-spacing:1.5px;
+  padding:5px 12px;border-radius:8px;cursor:pointer;
+  color:var(--white3);transition:all 0.15s;border:1px solid transparent;
+}
+.g-tab-web.active{background:var(--golddim);color:var(--gold);border-color:var(--border2);}
+
+/* ═══ TASKS (Karma Cards) ═══ */
+.karma-row{
+  display:flex;align-items:center;gap:14px;
+  padding:13px 0;border-bottom:1px solid var(--border);
+  cursor:pointer;transition:opacity 0.25s;
+}
+.karma-row:last-child{border-bottom:none;}
+.karma-row.done{opacity:0.4;}
+.karma-check{
+  width:26px;height:26px;border-radius:50%;
+  border:1.5px solid var(--border2);flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;color:transparent;transition:all 0.25s;
+  position:relative;
+}
+.karma-check::before{
+  content:'';position:absolute;inset:-3px;border-radius:50%;
+  border:1px solid rgba(212,168,83,0.2);
+}
+.karma-row.done .karma-check{background:var(--gold);border-color:var(--gold);color:#05060A;}
+.karma-text{flex:1;}
+.karma-title{font-size:14px;font-weight:500;color:var(--white);margin-bottom:2px;}
+.karma-meta{font-size:11px;color:var(--white3);font-weight:300;font-family:var(--cormorant);font-style:italic;}
+.karma-badge{font-size:9px;padding:3px 9px;border-radius:8px;font-family:var(--cinzel);letter-spacing:0.5px;}
+.kb-d{background:rgba(212,168,83,0.12);color:var(--gold);}
+.kb-h{background:rgba(82,201,122,0.10);color:var(--green);}
+.kb-f{background:rgba(78,143,212,0.10);color:var(--blue);}
+.kb-g{background:rgba(123,94,167,0.12);color:var(--sacred);}
+
+/* ═══ AI CARD ═══ */
+.brahma-card{
+  background:linear-gradient(135deg,rgba(212,168,83,0.07),rgba(212,168,83,0.02));
+  border:1px solid rgba(212,168,83,0.16);
+  border-radius:18px;padding:18px;
+  display:flex;gap:14px;margin-bottom:14px;
+}
+.brahma-icon{font-size:22px;flex-shrink:0;margin-top:2px;}
+.brahma-label{font-family:var(--cinzel);font-size:9px;letter-spacing:2px;color:var(--gold);margin-bottom:5px;text-transform:uppercase;}
+.brahma-body{font-family:var(--cormorant);font-size:15px;color:var(--white2);line-height:1.7;}
+
+/* ═══ AI CHAT ═══ */
+.chat-wrap{display:flex;flex-direction:column;height:calc(100vh - 180px);}
+.chat-messages{flex:1;overflow-y:auto;padding:4px 0 16px;scrollbar-width:thin;scrollbar-color:var(--surface2) transparent;}
+.chat-messages::-webkit-scrollbar{width:3px;}
+.chat-msg{
+  display:flex;gap:12px;margin-bottom:20px;
+  animation:fadeUp 0.3s ease;
+}
+.chat-msg.user{flex-direction:row-reverse;}
+.chat-avatar{
+  width:36px;height:36px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:16px;flex-shrink:0;
+}
+.ai-avatar{background:var(--golddim);border:1px solid var(--border2);}
+.user-avatar-chat{background:var(--surface2);border:1px solid var(--border);}
+.chat-bubble{
+  max-width:72%;padding:14px 18px;
+  border-radius:18px;font-size:13px;line-height:1.65;
+}
+.ai-bubble{
+  background:var(--surface);border:1px solid var(--border);
+  color:var(--white2);border-radius:4px 18px 18px 18px;
+  font-family:var(--cormorant);font-size:15px;
+}
+.user-bubble{
+  background:var(--golddim);border:1px solid var(--border2);
+  color:var(--white);border-radius:18px 4px 18px 18px;
+}
+.ai-name{font-family:var(--cinzel);font-size:9px;letter-spacing:2px;color:var(--gold);margin-bottom:6px;text-transform:uppercase;}
+.chat-input-wrap{
+  display:flex;gap:10px;align-items:center;
+  padding-top:16px;border-top:1px solid var(--border);
+}
+.chat-input{
+  flex:1;background:var(--surface);border:1px solid var(--border2);
+  border-radius:14px;padding:12px 18px;
+  font-family:var(--dm);font-size:13px;color:var(--white);
+  outline:none;resize:none;max-height:80px;
+  transition:border-color 0.2s;
+}
+.chat-input:focus{border-color:rgba(212,168,83,0.3);}
+.chat-input::placeholder{color:var(--white3);}
+.chat-send{
+  width:44px;height:44px;border-radius:50%;
+  background:var(--gold);border:none;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  font-size:16px;transition:all 0.2s;flex-shrink:0;
+}
+.chat-send:hover{background:var(--gold2);transform:scale(1.05);}
+.chat-thinking{display:flex;gap:4px;align-items:center;padding:4px 0;}
+.dot-pulse{width:6px;height:6px;border-radius:50%;background:var(--gold);animation:dp 1.2s ease-in-out infinite;}
+.dot-pulse:nth-child(2){animation-delay:0.2s;}
+.dot-pulse:nth-child(3){animation-delay:0.4s;}
+@keyframes dp{0%,60%,100%{transform:scale(0.8);opacity:0.4;}30%{transform:scale(1.1);opacity:1;}}
+.chat-suggestions{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;}
+.chat-chip{
+  padding:7px 14px;background:var(--surface);
+  border:1px solid var(--border2);border-radius:20px;
+  font-size:11px;color:var(--white2);cursor:pointer;
+  transition:all 0.2s;font-family:var(--cinzel);letter-spacing:0.5px;
+}
+.chat-chip:hover{border-color:var(--gold);color:var(--gold);background:var(--golddim);}
+
+/* ═══ CIRCLES ═══ */
+.circle-card-adv{
+  background:rgba(17,22,32,0.8);
+  border:1px solid var(--border);
+  border-radius:20px;overflow:hidden;margin-bottom:18px;
+  backdrop-filter:blur(10px);
+}
+.circle-head-adv{
+  padding:18px 22px 14px;
+  display:flex;justify-content:space-between;align-items:flex-start;
+  border-bottom:1px solid var(--border);
+  background:linear-gradient(135deg,rgba(212,168,83,0.05),transparent);
+}
+.circle-name-adv{font-family:var(--cinzel);font-size:17px;font-weight:700;color:var(--white);letter-spacing:1px;}
+.circle-sub-adv{font-family:var(--cormorant);font-style:italic;font-size:13px;color:var(--white3);margin-top:3px;}
+.avg-badge-adv{
+  background:var(--golddim);border:1px solid var(--border2);
+  padding:6px 14px;border-radius:12px;
+  font-family:var(--cinzel);font-size:12px;color:var(--gold);letter-spacing:1px;
+}
+.member-head{
+  display:grid;grid-template-columns:40px 1fr 100px 60px 60px 70px;
+  gap:12px;padding:10px 22px;
+  border-bottom:1px solid var(--border);
+  background:rgba(0,0,0,0.2);
+}
+.m-h-label{font-family:var(--cinzel);font-size:8px;letter-spacing:1.5px;color:var(--white3);text-transform:uppercase;}
+.member-row-adv{
+  display:grid;grid-template-columns:40px 1fr 100px 60px 60px 70px;
+  gap:12px;padding:13px 22px;
+  border-bottom:1px solid var(--border);
+  align-items:center;transition:background 0.2s;
+}
+.member-row-adv:last-child{border-bottom:none;}
+.member-row-adv:hover{background:rgba(212,168,83,0.03);}
+.m-av{width:34px;height:34px;border-radius:50%;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:15px;border:1px solid var(--border);}
+.m-nm{font-size:14px;font-weight:500;color:var(--white);}
+.m-nm span{display:block;font-size:11px;color:var(--white3);font-weight:300;font-family:var(--cormorant);font-style:italic;}
+.m-streak-adv{font-size:13px;color:var(--white2);text-align:center;}
+.m-check-adv{font-size:18px;text-align:center;}
+.m-score-mini{font-family:var(--cinzel);font-size:12px;font-weight:700;text-align:center;color:var(--white3);}
+.m-trust-adv{font-family:var(--cinzel);font-size:14px;font-weight:700;text-align:center;}
+.tg{color:var(--gold);}.tm{color:var(--white2);}.tr{color:var(--red);}
+.sos-adv{
+  background:rgba(212,92,92,0.06);border:1px solid rgba(212,92,92,0.18);
+  border-radius:16px;padding:18px 22px;
+  display:flex;align-items:center;gap:16px;cursor:pointer;
+  transition:all 0.2s;
+}
+.sos-adv:hover{background:rgba(212,92,92,0.1);}
+.sos-title{font-family:var(--cinzel);font-size:13px;letter-spacing:1px;color:var(--red);}
+.sos-sub{font-family:var(--cormorant);font-style:italic;font-size:13px;color:var(--white3);margin-top:3px;}
+
+/* ═══ INTELLIGENCE ═══ */
+.insight-card-adv{
+  background:rgba(17,22,32,0.8);border:1px solid var(--border);
+  border-radius:18px;padding:20px;margin-bottom:14px;
+  transition:border-color 0.2s,transform 0.2s;cursor:pointer;
+  backdrop-filter:blur(10px);
+}
+.insight-card-adv:hover{transform:translateY(-1px);}
+.insight-type-adv{font-family:var(--cinzel);font-size:9px;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;}
+.insight-title-adv{font-family:var(--cormorant);font-size:20px;font-weight:600;color:var(--white);margin-bottom:6px;}
+.insight-desc-adv{font-family:var(--cormorant);font-size:14px;color:var(--white2);line-height:1.7;}
+.stat-box-adv{text-align:center;}
+.stat-num-adv{font-family:var(--cinzel);font-size:38px;font-weight:900;color:var(--white);line-height:1;margin-bottom:6px;}
+.stat-label-adv{font-size:10px;color:var(--white3);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:4px;font-family:var(--cinzel);}
+.stat-change-adv{font-size:12px;}
+.week-card{
+  background:linear-gradient(135deg,rgba(212,168,83,0.08),rgba(212,168,83,0.02));
+  border:1px solid rgba(212,168,83,0.16);
+  border-radius:18px;padding:22px;margin-bottom:18px;
+}
+
+/* ═══ FINANCE ═══ */
+.finance-score-adv{font-family:var(--cinzel);font-size:56px;font-weight:900;color:var(--blue);line-height:1;margin-bottom:4px;filter:drop-shadow(0 0 12px rgba(78,143,212,0.4));}
+.spend-row-adv{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.spend-dot-adv{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.spend-lbl{flex:1;font-family:var(--cormorant);font-size:15px;color:var(--white2);}
+.spend-amt-adv{font-family:var(--cinzel);font-size:13px;font-weight:600;color:var(--white);}
+.spend-pct-adv{font-size:11px;color:var(--white3);width:32px;text-align:right;}
+.spend-bar-adv{height:6px;background:rgba(255,255,255,0.05);border-radius:3px;overflow:hidden;display:flex;margin-top:14px;}
+.goal-adv{background:rgba(17,22,32,0.7);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:10px;}
+.goal-top-adv{display:flex;justify-content:space-between;margin-bottom:10px;}
+.goal-title-adv{font-family:var(--cormorant);font-size:16px;color:var(--white);}
+.goal-pct-adv{font-family:var(--cinzel);font-size:13px;color:var(--blue);}
+.goal-track-adv{height:5px;background:rgba(255,255,255,0.05);border-radius:3px;overflow:hidden;}
+.goal-fill-adv{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--blue),var(--teal));}
+.goal-meta-adv{display:flex;justify-content:space-between;margin-top:8px;font-size:11px;color:var(--white3);}
+
+/* ═══ IDENTITY ═══ */
+.identity-hero-adv{
+  display:flex;align-items:center;gap:28px;
+  margin-bottom:24px;padding:24px;
+  background:linear-gradient(135deg,rgba(212,168,83,0.07),rgba(123,94,167,0.05));
+  border:1px solid var(--border);border-radius:20px;
+}
+.identity-av-adv{
+  width:80px;height:80px;border-radius:50%;
+  background:var(--golddim);border:2px solid var(--gold);
+  display:flex;align-items:center;justify-content:center;
+  font-size:36px;flex-shrink:0;
+  box-shadow:0 0 24px rgba(212,168,83,0.3);
+}
+.identity-name-adv{font-family:var(--cinzel);font-size:26px;font-weight:900;color:var(--white);letter-spacing:2px;margin-bottom:4px;}
+.identity-since-adv{font-family:var(--cormorant);font-style:italic;font-size:14px;color:var(--white3);}
+.id-score-big{font-family:var(--cinzel);font-size:68px;font-weight:900;color:var(--gold);line-height:1;filter:drop-shadow(0 0 16px rgba(212,168,83,0.4));}
+.id-score-tag{font-family:var(--cormorant);font-style:italic;font-size:16px;color:var(--white3);margin-top:4px;}
+.rep-row-adv{display:flex;justify-content:space-between;align-items:center;padding:13px 0;border-bottom:1px solid var(--border);}
+.rep-row-adv:last-child{border-bottom:none;}
+.rep-lbl-adv{font-family:var(--cormorant);font-size:15px;color:var(--white2);}
+.rep-val-adv{font-family:var(--cinzel);font-size:13px;font-weight:700;color:var(--gold);}
+.milestone-adv{display:flex;align-items:center;gap:16px;padding:14px 0;border-bottom:1px solid var(--border);}
+.milestone-adv:last-child{border-bottom:none;}
+.m-icon-adv{font-size:26px;flex-shrink:0;}
+.m-title-adv{font-family:var(--cormorant);font-size:16px;font-weight:600;color:var(--white);margin-bottom:3px;}
+.m-date-adv{font-size:11px;color:var(--white3);}
+
+/* ═══ SECTION LABEL ═══ */
+.section-lbl{
+  font-family:var(--cinzel);font-size:11px;font-weight:600;
+  color:var(--white);letter-spacing:2px;
+  margin-bottom:16px;text-transform:uppercase;
+  display:flex;justify-content:space-between;align-items:center;
+}
+.section-act{font-size:10px;color:var(--gold);cursor:pointer;font-weight:400;letter-spacing:1px;}
+
+/* ═══ MOBILE SCREENS ═══ */
+.m-screen{display:none;flex-direction:column;height:100%;background:var(--bg);}
+.m-screen.active{display:flex;}
+.m-scroll{flex:1;overflow-y:auto;scrollbar-width:none;padding-bottom:80px;}
+.m-scroll::-webkit-scrollbar{display:none;}
+.m-status{height:44px;padding:12px 24px 0;display:flex;justify-content:space-between;align-items:center;}
+.m-status-time{font-family:var(--cinzel);font-size:13px;color:var(--white);}
+.m-bottom-nav{
+  position:absolute;bottom:0;left:0;right:0;height:80px;
+  background:rgba(5,6,10,0.95);backdrop-filter:blur(20px);
+  border-top:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-around;
+  padding:0 8px 16px;z-index:100;
+}
+.m-nav-item{
+  display:flex;flex-direction:column;align-items:center;gap:3px;
+  cursor:pointer;padding:6px 12px;border-radius:12px;transition:all 0.2s;flex:1;
+}
+.m-nav-item.active{background:var(--golddim);}
+.m-nav-icon{font-size:18px;line-height:1;}
+.m-nav-label{font-family:var(--cinzel);font-size:8px;letter-spacing:1px;color:var(--white3);}
+.m-nav-item.active .m-nav-label{color:var(--gold);}
+
+/* mobile cards */
+.m-card{margin:0 16px 12px;background:var(--surface);border:1px solid var(--border);border-radius:22px;padding:20px;position:relative;overflow:hidden;}
+.m-section{padding:16px 16px 8px;display:flex;justify-content:space-between;align-items:center;}
+.m-section-title{font-family:var(--cinzel);font-size:11px;letter-spacing:2px;color:var(--white);}
+.m-section-act{font-size:10px;color:var(--gold);}
+
+/* ═══ SCROLLBAR ═══ */
+html{scrollbar-width:none;}
+</style>
+</head>
+<body>
+
+<canvas id="cosmos"></canvas>
+
+<!-- VIEW TOGGLE -->
+<div class="view-toggle">
+  <button class="vt-btn active" onclick="setView('web',this)">WEB DASHBOARD</button>
+  <button class="vt-btn" onclick="setView('mobile',this)">MOBILE APP</button>
+</div>
+
+<div class="shell">
+
+<!-- ══════════════ SIDEBAR ══════════════ -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-om">
+    <span class="om-symbol">ॐ</span>
+    <div class="sidebar-logo">SUTRA</div>
+    <div class="sidebar-tagline">dharma • karma • moksha</div>
+  </div>
+  <nav class="nav">
+    <div class="nav-item active" onclick="goTo('dashboard',this)"><span class="nav-chakra">⊙</span>Dashboard</div>
+    <div class="nav-item" onclick="goTo('circles',this)"><span class="nav-chakra">◎</span>Circles</div>
+    <div class="nav-item" onclick="goTo('intel',this)"><span class="nav-chakra">◈</span>Intelligence</div>
+    <div class="nav-item" onclick="goTo('brahma',this)"><span class="nav-chakra">✦</span>Brahma AI</div>
+    <div class="nav-item" onclick="goTo('finance',this)"><span class="nav-chakra">◇</span>Finance</div>
+    <div class="nav-item" onclick="goTo('identity',this)"><span class="nav-chakra">◉</span>Identity</div>
+  </nav>
+  <div class="sidebar-mantra">
+    <div class="mantra-text">"कर्म करो, फल की चिंता मत करो"</div>
+    <div class="mantra-translation">Act. Do not worry about results.</div>
+  </div>
+</aside>
+
+<!-- ══════════════ MAIN WEB ══════════════ -->
+<div class="main" id="web-main">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-title" id="topbar-title">DASHBOARD</div>
+      <div class="topbar-sanskrit" id="topbar-sanskrit">— कर्म भूमि —</div>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-date">Wednesday, March 18 · 9:41 AM</div>
+      <div class="streak-pill">🔥 12 Days · Agni Streak</div>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ══ DASHBOARD ══ -->
+    <div class="page active" id="page-dashboard">
+      <div class="g2">
+        <!-- Mandala Score Card -->
+        <div class="card card-gold-glow">
+          <div class="card-label">Life Score — जीवन अंक</div>
+          <div class="score-hero">
+            <div class="mandala-wrap">
+              <svg class="mandala-svg" viewBox="0 0 170 170">
+                <!-- Mandala rings -->
+                <circle class="mandala-ring" cx="85" cy="85" r="78" stroke="rgba(212,168,83,0.05)" stroke-dasharray="4 8"/>
+                <circle class="mandala-ring" cx="85" cy="85" r="68" stroke="rgba(212,168,83,0.04)" stroke-dasharray="2 6"/>
+                <!-- Decorative petals -->
+                <g opacity="0.12" transform="translate(85,85)">
+                  <ellipse rx="6" ry="14" fill="var(--gold)" transform="rotate(0) translate(0,-58)"/>
+                  <ellipse rx="6" ry="14" fill="var(--gold)" transform="rotate(45) translate(0,-58)"/>
+                  <ellipse rx="6" ry="14" fill="var(--gold)" transform="rotate(90) translate(0,-58)"/>
+                  <ellipse rx="6" ry="14" fill="var(--gold)" transform="rotate(135) translate(0,-58)"/>
+                  <ellipse rx="6" ry="14" fill="var(--gold)" transform="rotate(180) translate(0,-58)"/>
+                  <ellipse rx="6" ry="14" fill="var(--gold)" transform="rotate(225) translate(0,-58)"/>
+                  <ellipse rx="6" ry="14" fill="var(--gold)" transform="rotate(270) translate(0,-58)"/>
+                  <ellipse rx="6" ry="14" fill="var(--gold)" transform="rotate(315) translate(0,-58)"/>
+                </g>
+                <!-- Score track -->
+                <circle class="mandala-score-ring" cx="85" cy="85" r="65"
+                  stroke="rgba(212,168,83,0.08)" transform="rotate(-90 85 85)"
+                  stroke-dasharray="408" stroke-dashoffset="0"/>
+                <!-- Score fill -->
+                <circle class="mandala-score-ring" id="score-ring-web" cx="85" cy="85" r="65"
+                  stroke="url(#goldGrad)" transform="rotate(-90 85 85)"
+                  stroke-dasharray="408" stroke-dashoffset="122"
+                  filter="url(#glow)"/>
+                <defs>
+                  <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" style="stop-color:#D4A853"/>
+                    <stop offset="100%" style="stop-color:#F0C97A"/>
+                  </linearGradient>
+                  <filter id="glow">
+                    <feGaussianBlur stdDeviation="3" result="blur"/>
+                    <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                  </filter>
+                </defs>
+              </svg>
+              <div class="score-center-web">
+                <div class="score-num-web">68</div>
+                <div class="score-denom-web">/ 100</div>
+              </div>
+            </div>
+            <div class="score-details-web">
+              <div class="score-dharma-label">Disciplined</div>
+              <div class="score-change-web">↑ +3 from yesterday</div>
+              <div class="score-insight-web">"Sleep consistency is your next dharmic duty. Fix it, and the score follows."</div>
+              <div class="streak-badge-web">🔥 12 Day Agni Streak</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Yagna Graph -->
+        <div class="card">
+          <div class="card-label">Growth Graph — विकास यात्रा</div>
+          <div class="graph-tabs-web">
+            <div class="g-tab-web active" onclick="setGTab(this)">7 DAYS</div>
+            <div class="g-tab-web" onclick="setGTab(this)">30 DAYS</div>
+            <div class="g-tab-web" onclick="setGTab(this)">1 YEAR</div>
+          </div>
+          <div class="flame-wrap">
+            <div class="flame-col"><div class="flame-bar" style="height:52px;background:linear-gradient(0deg,#D4A853,#8B6A2A);color:var(--gold)"><span class="flame-val">58</span></div><div class="flame-day">Mon</div></div>
+            <div class="flame-col"><div class="flame-bar" style="height:60px;background:linear-gradient(0deg,#D4A853,#8B6A2A);color:var(--gold)"><span class="flame-val">62</span></div><div class="flame-day">Tue</div></div>
+            <div class="flame-col"><div class="flame-bar" style="height:48px;background:linear-gradient(0deg,#C4943D,#7A5A20)"><span class="flame-val">56</span></div><div class="flame-day">Wed</div></div>
+            <div class="flame-col"><div class="flame-bar" style="height:66px;background:linear-gradient(0deg,#D4A853,#8B6A2A)"><span class="flame-val">64</span></div><div class="flame-day">Thu</div></div>
+            <div class="flame-col"><div class="flame-bar" style="height:62px;background:linear-gradient(0deg,#D4A853,#8B6A2A)"><span class="flame-val">63</span></div><div class="flame-day">Fri</div></div>
+            <div class="flame-col"><div class="flame-bar" style="height:70px;background:linear-gradient(0deg,#D4A853,#8B6A2A)"><span class="flame-val">65</span></div><div class="flame-day">Sat</div></div>
+            <div class="flame-col"><div class="flame-bar today" style="height:84px;background:linear-gradient(0deg,var(--gold2),var(--gold));color:var(--gold)"><span class="flame-val">68</span></div><div class="flame-day" style="color:var(--gold)">Today</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chakra Pillars -->
+      <div class="g4">
+        <div class="chakra-card" style="border-color:rgba(212,168,83,0.2)">
+          <span class="chakra-symbol">🔱</span>
+          <div class="chakra-num" style="color:var(--gold)">72</div>
+          <div class="chakra-name">Discipline</div>
+          <div class="chakra-sanskrit" style="color:rgba(212,168,83,0.6)">तप — Tapas</div>
+          <div class="chakra-bar-track"><div class="chakra-bar-fill" style="width:72%;background:linear-gradient(90deg,var(--gold),var(--gold2))"></div></div>
+        </div>
+        <div class="chakra-card" style="border-color:rgba(82,201,122,0.2)">
+          <span class="chakra-symbol">🌿</span>
+          <div class="chakra-num" style="color:var(--green)">58</div>
+          <div class="chakra-name">Health</div>
+          <div class="chakra-sanskrit" style="color:rgba(82,201,122,0.6)">आरोग्य — Ārogya</div>
+          <div class="chakra-bar-track"><div class="chakra-bar-fill" style="width:58%;background:linear-gradient(90deg,var(--green),#7BE89A)"></div></div>
+        </div>
+        <div class="chakra-card" style="border-color:rgba(78,143,212,0.2)">
+          <span class="chakra-symbol">💫</span>
+          <div class="chakra-num" style="color:var(--blue)">74</div>
+          <div class="chakra-name">Finance</div>
+          <div class="chakra-sanskrit" style="color:rgba(78,143,212,0.6)">अर्थ — Artha</div>
+          <div class="chakra-bar-track"><div class="chakra-bar-fill" style="width:74%;background:linear-gradient(90deg,var(--blue),var(--teal))"></div></div>
+        </div>
+        <div class="chakra-card" style="border-color:rgba(123,94,167,0.2)">
+          <span class="chakra-symbol">🪷</span>
+          <div class="chakra-num" style="color:var(--sacred)">63</div>
+          <div class="chakra-name">Growth</div>
+          <div class="chakra-sanskrit" style="color:rgba(123,94,167,0.6)">विद्या — Vidyā</div>
+          <div class="chakra-bar-track"><div class="chakra-bar-fill" style="width:63%;background:linear-gradient(90deg,var(--sacred),#B89FE8)"></div></div>
+        </div>
+      </div>
+
+      <!-- Tasks + AI Insights -->
+      <div class="g2">
+        <div class="card">
+          <div class="section-lbl">Today's Dharma <span class="section-act">AI Generated</span></div>
+          <div class="karma-row done" onclick="toggleKarma(this)">
+            <div class="karma-check">✓</div>
+            <div class="karma-text"><div class="karma-title">Deep work — 2 hours</div><div class="karma-meta">Tapas in action. No distraction.</div></div>
+            <div class="karma-badge kb-d">TAPAS</div>
+          </div>
+          <div class="karma-row" onclick="toggleKarma(this)">
+            <div class="karma-check"></div>
+            <div class="karma-text"><div class="karma-title">Avoid unnecessary spending</div><div class="karma-meta">Artha discipline needed today</div></div>
+            <div class="karma-badge kb-f">ARTHA</div>
+          </div>
+          <div class="karma-row" onclick="toggleKarma(this)">
+            <div class="karma-check"></div>
+            <div class="karma-text"><div class="karma-title">Sleep before 11 PM</div><div class="karma-meta">Body is the chariot of the soul</div></div>
+            <div class="karma-badge kb-h">ĀROGYA</div>
+          </div>
+          <div class="karma-row" onclick="toggleKarma(this)">
+            <div class="karma-check"></div>
+            <div class="karma-text"><div class="karma-title">Read or learn — 30 mins</div><div class="karma-meta">Vidyā is the highest wealth</div></div>
+            <div class="karma-badge kb-g">VIDYĀ</div>
+          </div>
+          <div class="karma-row" onclick="toggleKarma(this)">
+            <div class="karma-check"></div>
+            <div class="karma-text"><div class="karma-title">Morning meditation — 10 mins</div><div class="karma-meta">Dhyāna aligns the mind</div></div>
+            <div class="karma-badge kb-g">DHYĀNA</div>
+          </div>
+        </div>
+        <div>
+          <div class="brahma-card">
+            <div class="brahma-icon">🧠</div>
+            <div>
+              <div class="brahma-label">Brahma Insight</div>
+              <div class="brahma-body">Your peak tapas window is 9–11 AM. Three weeks of data confirm this. Guard it like a temple.</div>
+            </div>
+          </div>
+          <div class="brahma-card" style="border-color:rgba(212,92,92,0.18);background:linear-gradient(135deg,rgba(212,92,92,0.06),transparent)">
+            <div class="brahma-icon">⚠️</div>
+            <div>
+              <div class="brahma-label" style="color:var(--red)">Risk Alert</div>
+              <div class="brahma-body">Sleep dropped 3 nights. The body weakens before the mind does. This is a warning signal.</div>
+            </div>
+          </div>
+          <div class="brahma-card" style="border-color:rgba(82,201,122,0.18);background:linear-gradient(135deg,rgba(82,201,122,0.06),transparent)">
+            <div class="brahma-icon">✨</div>
+            <div>
+              <div class="brahma-label" style="color:var(--green)">Victory</div>
+              <div class="brahma-body">Seven days of artha discipline. Zero waste. Your financial dharma is improving.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ CIRCLES ══ -->
+    <div class="page" id="page-circles">
+      <div class="section-lbl" style="margin-bottom:20px">Sacred Circles <span class="section-act">+ Create Circle</span></div>
+
+      <div class="circle-card-adv">
+        <div class="circle-head-adv">
+          <div>
+            <div class="circle-name-adv">Warriors ⚔️</div>
+            <div class="circle-sub-adv">पाँच योद्धा — Five walking the path together · Day 24</div>
+          </div>
+          <div class="avg-badge-adv">Avg Score 71</div>
+        </div>
+        <div class="member-head">
+          <div></div>
+          <div class="m-h-label">Sadhak</div>
+          <div class="m-h-label" style="text-align:center">Agni Streak</div>
+          <div class="m-h-label" style="text-align:center">Today</div>
+          <div class="m-h-label" style="text-align:center">Score</div>
+          <div class="m-h-label" style="text-align:center">Trust</div>
+        </div>
+        <div class="member-row-adv">
+          <div class="m-av">🦁</div>
+          <div class="m-nm">Arjun (You)<span>धर्म रक्षक</span></div>
+          <div class="m-streak-adv">🔥 12 days</div>
+          <div class="m-check-adv">✅</div>
+          <div class="m-score-mini" style="color:var(--gold)">68</div>
+          <div class="m-trust-adv tg">92</div>
+        </div>
+        <div class="member-row-adv">
+          <div class="m-av">🐯</div>
+          <div class="m-nm">Rahul<span>साधक</span></div>
+          <div class="m-streak-adv">🔥 8 days</div>
+          <div class="m-check-adv">✅</div>
+          <div class="m-score-mini" style="color:var(--white2)">72</div>
+          <div class="m-trust-adv tg">85</div>
+        </div>
+        <div class="member-row-adv">
+          <div class="m-av">🦅</div>
+          <div class="m-nm">Priya<span>जिज्ञासु</span></div>
+          <div class="m-streak-adv">💔 3 days</div>
+          <div class="m-check-adv">❌</div>
+          <div class="m-score-mini" style="color:var(--white3)">54</div>
+          <div class="m-trust-adv tm">61</div>
+        </div>
+        <div class="member-row-adv">
+          <div class="m-av">🐺</div>
+          <div class="m-nm">Karan<span>तपस्वी</span></div>
+          <div class="m-streak-adv">🔥 19 days</div>
+          <div class="m-check-adv">✅</div>
+          <div class="m-score-mini" style="color:var(--gold)">81</div>
+          <div class="m-trust-adv tg">94</div>
+        </div>
+        <div class="member-row-adv">
+          <div class="m-av">🦋</div>
+          <div class="m-nm">Ananya<span>शिष्या</span></div>
+          <div class="m-streak-adv">💔 1 day</div>
+          <div class="m-check-adv">❌</div>
+          <div class="m-score-mini" style="color:var(--red)">41</div>
+          <div class="m-trust-adv tr">42</div>
+        </div>
+      </div>
+
+      <div class="sos-adv">
+        <div style="font-size:26px">🚨</div>
+        <div>
+          <div class="sos-title">I'M NOT OKAY — DHARMA SUPPORT</div>
+          <div class="sos-sub">Sends a silent signal to your circle. No words needed. They will know.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ INTELLIGENCE ══ -->
+    <div class="page" id="page-intel">
+      <div class="week-card">
+        <div class="card-label" style="color:var(--gold)">Weekly Dharma Report — Week 12</div>
+        <div class="g3" style="margin-bottom:0">
+          <div class="stat-box-adv">
+            <div class="stat-label-adv">Life Score</div>
+            <div class="stat-num-adv">68</div>
+            <div class="stat-change-adv" style="color:var(--green)">↑ +5 this week</div>
+          </div>
+          <div class="stat-box-adv">
+            <div class="stat-label-adv">Karma Done</div>
+            <div class="stat-num-adv">84%</div>
+            <div class="stat-change-adv" style="color:var(--green)">↑ +11% better</div>
+          </div>
+          <div class="stat-box-adv">
+            <div class="stat-label-adv">Agni Streak</div>
+            <div class="stat-num-adv">12d</div>
+            <div class="stat-change-adv" style="color:var(--gold)">🏆 Best ever</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-lbl">Brahmic Insights</div>
+
+      <div class="insight-card-adv" style="border-color:rgba(212,168,83,0.2)">
+        <div class="insight-type-adv" style="color:var(--gold)">⚡ PATTERN — TAPAS</div>
+        <div class="insight-title-adv">You peak between 9–11 AM</div>
+        <div class="insight-desc-adv">Discipline score is 34% higher on days you begin before 9 AM. This is your brahma muhurta — the sacred hour. Three weeks of data confirm this pattern. Protect it.</div>
+      </div>
+      <div class="insight-card-adv" style="border-color:rgba(212,92,92,0.2)">
+        <div class="insight-type-adv" style="color:var(--red)">⚠️ RISK — ĀROGYA</div>
+        <div class="insight-title-adv">The body is sending a warning</div>
+        <div class="insight-desc-adv">Three consecutive nights of poor sleep. In the Gita, Krishna says the body is the chariot of the soul — a broken chariot cannot win the war. Restore sleep tonight.</div>
+      </div>
+      <div class="insight-card-adv" style="border-color:rgba(82,201,122,0.2)">
+        <div class="insight-type-adv" style="color:var(--green)">✅ VICTORY — ARTHA</div>
+        <div class="insight-title-adv">Seven days of financial dharma</div>
+        <div class="insight-desc-adv">Zero waste spending. The Arthashastra teaches that wealth grows not through earning alone, but through disciplined retention. You are practicing this.</div>
+      </div>
+      <div class="insight-card-adv" style="border-color:rgba(123,94,167,0.2)">
+        <div class="insight-type-adv" style="color:var(--sacred)">🪷 FOCUS — VIDYĀ</div>
+        <div class="insight-title-adv">Knowledge is being neglected</div>
+        <div class="insight-desc-adv">Only 2 of 7 days had learning logged. Vidyā — the pursuit of knowledge — is one of the four purusharthas. Twenty minutes daily will transform your growth pillar.</div>
+      </div>
+    </div>
+
+    <!-- ══ BRAHMA AI ══ -->
+    <div class="page" id="page-brahma">
+      <div class="chat-wrap">
+        <div class="chat-suggestions">
+          <div class="chat-chip" onclick="sendChip(this)">Why is my score dropping?</div>
+          <div class="chat-chip" onclick="sendChip(this)">How to fix my sleep?</div>
+          <div class="chat-chip" onclick="sendChip(this)">Best time to study today?</div>
+          <div class="chat-chip" onclick="sendChip(this)">My finance review</div>
+          <div class="chat-chip" onclick="sendChip(this)">Give me a mantra for today</div>
+        </div>
+
+        <div class="chat-messages" id="chat-messages">
+          <div class="chat-msg">
+            <div class="chat-avatar ai-avatar">🔱</div>
+            <div>
+              <div class="ai-name">BRAHMA — YOUR AI GUIDE</div>
+              <div class="chat-bubble ai-bubble">Namaste, Arjun. I am Brahma — your intelligent life guide within SUTRA.<br><br>I have studied your patterns across 40 days. Your discipline is rising, your finances are strong, but your sleep and growth need attention.<br><br>What would you like to explore today?</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="chat-input-wrap">
+          <textarea class="chat-input" id="chat-input" rows="1" placeholder="Ask Brahma anything about your life..." onkeydown="handleKey(event)"></textarea>
+          <button class="chat-send" onclick="sendMessage()">↑</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ FINANCE ══ -->
+    <div class="page" id="page-finance">
+      <div class="g2">
+        <div class="card card-saffron-glow">
+          <div class="card-label">Financial Score — अर्थ</div>
+          <div class="finance-score-adv">74</div>
+          <div style="font-family:var(--cormorant);font-style:italic;font-size:14px;color:var(--white3);margin-bottom:20px">Artha Discipline</div>
+          <div class="spend-row-adv"><div class="spend-dot-adv" style="background:var(--green)"></div><div class="spend-lbl">Needs — आवश्यकता</div><div class="spend-amt-adv">₹12,400</div><div class="spend-pct-adv">62%</div></div>
+          <div class="spend-row-adv"><div class="spend-dot-adv" style="background:var(--gold)"></div><div class="spend-lbl">Wants — इच्छा</div><div class="spend-amt-adv">₹5,200</div><div class="spend-pct-adv">26%</div></div>
+          <div class="spend-row-adv"><div class="spend-dot-adv" style="background:var(--red)"></div><div class="spend-lbl">Waste — व्यर्थ</div><div class="spend-amt-adv">₹2,400</div><div class="spend-pct-adv">12%</div></div>
+          <div class="spend-bar-adv">
+            <div style="width:62%;background:var(--green);height:100%"></div>
+            <div style="width:26%;background:var(--gold);height:100%"></div>
+            <div style="width:12%;background:var(--red);height:100%"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="section-lbl">Savings — संचय <span class="section-act">+ Add Goal</span></div>
+          <div class="goal-adv"><div class="goal-top-adv"><div class="goal-title-adv">Emergency Fund</div><div class="goal-pct-adv">68%</div></div><div class="goal-track-adv"><div class="goal-fill-adv" style="width:68%"></div></div><div class="goal-meta-adv"><span>₹34,000</span><span>Target ₹50,000</span></div></div>
+          <div class="goal-adv"><div class="goal-top-adv"><div class="goal-title-adv">Reduce Waste Spending</div><div class="goal-pct-adv">88%</div></div><div class="goal-track-adv"><div class="goal-fill-adv" style="width:88%"></div></div><div class="goal-meta-adv"><span>7 clean days</span><span>Target: Under 10%</span></div></div>
+          <div class="goal-adv"><div class="goal-top-adv"><div class="goal-title-adv">Course Investment</div><div class="goal-pct-adv">40%</div></div><div class="goal-track-adv"><div class="goal-fill-adv" style="width:40%"></div></div><div class="goal-meta-adv"><span>₹4,000</span><span>Target ₹10,000</span></div></div>
+        </div>
+      </div>
+      <div class="brahma-card">
+        <div class="brahma-icon">💡</div>
+        <div>
+          <div class="brahma-label">Artha Insight</div>
+          <div class="brahma-body">Waste spending dropped 8% from last month. The Chanakya Niti says: "One who does not think about the future will face difficulties." You are planning. Keep going.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ IDENTITY ══ -->
+    <div class="page" id="page-identity">
+      <div class="identity-hero-adv">
+        <div class="identity-av-adv">🧘</div>
+        <div style="flex:1">
+          <div class="identity-name-adv">ARJUN SHARMA</div>
+          <div class="identity-since-adv">साधक — Seeker of the disciplined path · Day 40 · Member since February 2025</div>
+        </div>
+        <div style="text-align:right">
+          <div class="id-score-big">68</div>
+          <div class="id-score-tag">Disciplined — अनुशासित</div>
+        </div>
+      </div>
+
+      <div class="g2">
+        <div class="card card-sacred-glow">
+          <div class="card-label">Chakra Balance — चक्र संतुलन</div>
+          <div class="g2" style="margin-bottom:0;gap:10px">
+            <div class="chakra-card" style="border-color:rgba(212,168,83,0.2);padding:14px">
+              <div class="chakra-num" style="color:var(--gold);font-size:22px">72</div>
+              <div class="chakra-name" style="font-size:9px">Tapas</div>
+              <div class="chakra-bar-track" style="margin-top:8px"><div class="chakra-bar-fill" style="width:72%;background:var(--gold)"></div></div>
+            </div>
+            <div class="chakra-card" style="border-color:rgba(82,201,122,0.2);padding:14px">
+              <div class="chakra-num" style="color:var(--green);font-size:22px">58</div>
+              <div class="chakra-name" style="font-size:9px">Ārogya</div>
+              <div class="chakra-bar-track" style="margin-top:8px"><div class="chakra-bar-fill" style="width:58%;background:var(--green)"></div></div>
+            </div>
+            <div class="chakra-card" style="border-color:rgba(78,143,212,0.2);padding:14px">
+              <div class="chakra-num" style="color:var(--blue);font-size:22px">74</div>
+              <div class="chakra-name" style="font-size:9px">Artha</div>
+              <div class="chakra-bar-track" style="margin-top:8px"><div class="chakra-bar-fill" style="width:74%;background:var(--blue)"></div></div>
+            </div>
+            <div class="chakra-card" style="border-color:rgba(123,94,167,0.2);padding:14px">
+              <div class="chakra-num" style="color:var(--sacred);font-size:22px">63</div>
+              <div class="chakra-name" style="font-size:9px">Vidyā</div>
+              <div class="chakra-bar-track" style="margin-top:8px"><div class="chakra-bar-fill" style="width:63%;background:var(--sacred)"></div></div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-label">Reputation — प्रतिष्ठा</div>
+          <div class="rep-row-adv"><div class="rep-lbl-adv">Trust Score</div><div class="rep-val-adv">92 / 100</div></div>
+          <div class="rep-row-adv"><div class="rep-lbl-adv">Check-in Reliability</div><div class="rep-val-adv">96%</div></div>
+          <div class="rep-row-adv"><div class="rep-lbl-adv">Karma Completion</div><div class="rep-val-adv">84%</div></div>
+          <div class="rep-row-adv"><div class="rep-lbl-adv">Active Circles</div><div class="rep-val-adv">2</div></div>
+          <div class="rep-row-adv"><div class="rep-lbl-adv">Days on SUTRA</div><div class="rep-val-adv">40 Days</div></div>
+        </div>
+      </div>
+
+      <div class="section-lbl">Milestones — उपलब्धियाँ</div>
+      <div class="card">
+        <div class="milestone-adv"><div class="m-icon-adv">🔥</div><div><div class="m-title-adv">12-Day Agni Streak</div><div class="m-date-adv">Personal best · Achieved today</div></div></div>
+        <div class="milestone-adv"><div class="m-icon-adv">💰</div><div><div class="m-title-adv">Artha Discipline — 7 Days Clean</div><div class="m-date-adv">Zero waste spending · March 11–18</div></div></div>
+        <div class="milestone-adv"><div class="m-icon-adv">⚡</div><div><div class="m-title-adv">First Score Above 65</div><div class="m-date-adv">March 10, 2025</div></div></div>
+        <div class="milestone-adv"><div class="m-icon-adv">🪷</div><div><div class="m-title-adv">30-Day Sadhak</div><div class="m-date-adv">February 2025</div></div></div>
+        <div class="milestone-adv"><div class="m-icon-adv">◎</div><div><div class="m-title-adv">First Circle — Warriors Founded</div><div class="m-date-adv">February 15, 2025</div></div></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════ MOBILE PHONE ══════════════ -->
+<div class="phone-frame" id="phone-frame">
+  <!-- Mobile Home -->
+  <div class="m-screen active" id="ms-home">
+    <div class="m-status"><span class="m-status-time">9:41</span><span style="font-size:12px;color:var(--white)">●●● ▌</span></div>
+    <div class="m-scroll">
+      <div style="padding:8px 16px 16px;display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <div style="font-size:11px;color:var(--white3);font-family:var(--cinzel);letter-spacing:1px">WEDNESDAY, MARCH 18</div>
+          <div style="font-family:var(--cinzel);font-size:18px;color:var(--white);margin-top:3px;letter-spacing:1px">Namaste, Arjun</div>
+        </div>
+        <div style="width:42px;height:42px;border-radius:50%;background:var(--golddim);border:1.5px solid var(--gold);display:flex;align-items:center;justify-content:center;font-size:20px">🧘</div>
+      </div>
+
+      <!-- Score Card Mobile -->
+      <div class="m-card card-gold-glow">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <div style="font-family:var(--cinzel);font-size:9px;letter-spacing:2px;color:var(--white3)">LIFE SCORE</div>
+          <div style="background:var(--golddim);border:1px solid var(--border2);padding:4px 10px;border-radius:14px;font-family:var(--cinzel);font-size:10px;color:var(--gold)">🔥 12d Agni</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:20px">
+          <div style="position:relative;width:100px;height:100px;flex-shrink:0">
+            <svg width="100" height="100" viewBox="0 0 100 100" style="transform:rotate(-90deg)">
+              <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(212,168,83,0.08)" stroke-width="7"/>
+              <circle cx="50" cy="50" r="42" fill="none" stroke="url(#mg)" stroke-width="7" stroke-linecap="round" stroke-dasharray="264" stroke-dashoffset="79" filter="url(#mg2)"/>
+              <defs>
+                <linearGradient id="mg" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" style="stop-color:#D4A853"/><stop offset="100%" style="stop-color:#F0C97A"/></linearGradient>
+                <filter id="mg2"><feGaussianBlur stdDeviation="2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+              </defs>
+            </svg>
+            <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center">
+              <div style="font-family:var(--cinzel);font-size:26px;font-weight:900;color:var(--gold);line-height:1">68</div>
+              <div style="font-size:9px;color:var(--white3)">/100</div>
+            </div>
+          </div>
+          <div style="flex:1">
+            <div style="font-family:var(--cormorant);font-style:italic;font-size:18px;color:var(--gold2);margin-bottom:4px">Disciplined</div>
+            <div style="font-size:12px;color:var(--green);margin-bottom:8px">↑ +3 today</div>
+            <div style="font-family:var(--cormorant);font-size:13px;color:var(--white2);line-height:1.5">"Sleep is your next dharmic duty."</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:16px">
+          <div style="flex:1;background:var(--bg3);border-radius:12px;padding:10px;text-align:center;border:1px solid var(--border)">
+            <div style="font-family:var(--cinzel);font-size:14px;color:var(--gold)">72</div>
+            <div style="font-size:8px;color:var(--white3);margin-top:3px;letter-spacing:1px">TAPAS</div>
+          </div>
+          <div style="flex:1;background:var(--bg3);border-radius:12px;padding:10px;text-align:center;border:1px solid var(--border)">
+            <div style="font-family:var(--cinzel);font-size:14px;color:var(--green)">58</div>
+            <div style="font-size:8px;color:var(--white3);margin-top:3px;letter-spacing:1px">ĀROGYA</div>
+          </div>
+          <div style="flex:1;background:var(--bg3);border-radius:12px;padding:10px;text-align:center;border:1px solid var(--border)">
+            <div style="font-family:var(--cinzel);font-size:14px;color:var(--blue)">74</div>
+            <div style="font-size:8px;color:var(--white3);margin-top:3px;letter-spacing:1px">ARTHA</div>
+          </div>
+          <div style="flex:1;background:var(--bg3);border-radius:12px;padding:10px;text-align:center;border:1px solid var(--border)">
+            <div style="font-family:var(--cinzel);font-size:14px;color:var(--sacred)">63</div>
+            <div style="font-size:8px;color:var(--white3);margin-top:3px;letter-spacing:1px">VIDYĀ</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AI Insight Mobile -->
+      <div class="m-card" style="background:linear-gradient(135deg,rgba(212,168,83,0.07),rgba(212,168,83,0.02));border-color:rgba(212,168,83,0.18)">
+        <div style="display:flex;gap:12px">
+          <span style="font-size:20px">🔱</span>
+          <div>
+            <div style="font-family:var(--cinzel);font-size:9px;letter-spacing:2px;color:var(--gold);margin-bottom:5px">BRAHMA INSIGHT</div>
+            <div style="font-family:var(--cormorant);font-size:14px;color:var(--white2);line-height:1.6">Your peak window is 9–11 AM. Three weeks confirm this. Protect it like a temple.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tasks Mobile -->
+      <div class="m-section"><div class="m-section-title">TODAY'S DHARMA</div><div class="m-section-act">AI · 1/5</div></div>
+      <div class="m-card" style="padding:16px">
+        <div class="karma-row done" onclick="toggleKarma(this)">
+          <div class="karma-check">✓</div>
+          <div class="karma-text"><div class="karma-title" style="font-size:13px">Deep work — 2 hours</div><div class="karma-meta">Tapas in action</div></div>
+          <div class="karma-badge kb-d" style="font-size:8px">TAPAS</div>
+        </div>
+        <div class="karma-row" onclick="toggleKarma(this)">
+          <div class="karma-check"></div>
+          <div class="karma-text"><div class="karma-title" style="font-size:13px">Avoid unnecessary spending</div><div class="karma-meta">Artha discipline</div></div>
+          <div class="karma-badge kb-f" style="font-size:8px">ARTHA</div>
+        </div>
+        <div class="karma-row" onclick="toggleKarma(this)">
+          <div class="karma-check"></div>
+          <div class="karma-text"><div class="karma-title" style="font-size:13px">Sleep before 11 PM</div><div class="karma-meta">Body is the chariot</div></div>
+          <div class="karma-badge kb-h" style="font-size:8px">ĀROGYA</div>
+        </div>
+        <div class="karma-row" onclick="toggleKarma(this)">
+          <div class="karma-check"></div>
+          <div class="karma-text"><div class="karma-title" style="font-size:13px">Read — 30 mins</div><div class="karma-meta">Vidyā is wealth</div></div>
+          <div class="karma-badge kb-g" style="font-size:8px">VIDYĀ</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mobile Nav -->
+    <div class="m-bottom-nav">
+      <div class="m-nav-item active" onclick="mGoTo('home',this)"><div class="m-nav-icon">⊙</div><div class="m-nav-label">HOME</div></div>
+      <div class="m-nav-item" onclick="mGoTo('circles',this)"><div class="m-nav-icon">◎</div><div class="m-nav-label">CIRCLE</div></div>
+      <div class="m-nav-item" onclick="mGoTo('brahma-m',this)"><div class="m-nav-icon">✦</div><div class="m-nav-label">BRAHMA</div></div>
+      <div class="m-nav-item" onclick="mGoTo('intel',this)"><div class="m-nav-icon">◈</div><div class="m-nav-label">INTEL</div></div>
+      <div class="m-nav-item" onclick="mGoTo('identity',this)"><div class="m-nav-icon">◉</div><div class="m-nav-label">SELF</div></div>
+    </div>
+  </div>
+
+  <!-- Mobile Circles -->
+  <div class="m-screen" id="ms-circles">
+    <div class="m-status"><span class="m-status-time">9:41</span></div>
+    <div class="m-scroll">
+      <div style="padding:8px 16px 16px">
+        <div style="font-family:var(--cinzel);font-size:20px;color:var(--white);letter-spacing:2px">CIRCLES</div>
+        <div style="font-family:var(--cormorant);font-style:italic;font-size:14px;color:var(--white3);margin-top:3px">Sacred accountability</div>
+      </div>
+      <div class="m-card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px">
+          <div><div style="font-family:var(--cinzel);font-size:15px;color:var(--white);letter-spacing:1px">Warriors ⚔️</div><div style="font-size:11px;color:var(--white3);margin-top:3px">5 योद्धा · Day 24</div></div>
+          <div style="background:var(--golddim);border:1px solid var(--border2);padding:5px 11px;border-radius:10px;font-family:var(--cinzel);font-size:11px;color:var(--gold)">Avg 71</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:2px">
+          <div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border)"><div style="font-size:18px">🦁</div><div style="flex:1"><div style="font-size:13px;color:var(--white)">Arjun (You)</div><div style="font-size:10px;color:var(--white3)">🔥 12d</div></div><div style="font-size:16px">✅</div><div style="font-family:var(--cinzel);font-size:13px;color:var(--gold)">92</div></div>
+          <div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border)"><div style="font-size:18px">🐯</div><div style="flex:1"><div style="font-size:13px;color:var(--white)">Rahul</div><div style="font-size:10px;color:var(--white3)">🔥 8d</div></div><div style="font-size:16px">✅</div><div style="font-family:var(--cinzel);font-size:13px;color:var(--gold)">85</div></div>
+          <div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border)"><div style="font-size:18px">🦅</div><div style="flex:1"><div style="font-size:13px;color:var(--white)">Priya</div><div style="font-size:10px;color:var(--white3)">💔 3d</div></div><div style="font-size:16px">❌</div><div style="font-family:var(--cinzel);font-size:13px;color:var(--white3)">61</div></div>
+          <div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border)"><div style="font-size:18px">🐺</div><div style="flex:1"><div style="font-size:13px;color:var(--white)">Karan</div><div style="font-size:10px;color:var(--white3)">🔥 19d</div></div><div style="font-size:16px">✅</div><div style="font-family:var(--cinzel);font-size:13px;color:var(--gold)">94</div></div>
+          <div style="display:flex;align-items:center;gap:10px;padding:9px 0"><div style="font-size:18px">🦊</div><div style="flex:1"><div style="font-size:13px;color:var(--white)">Ananya</div><div style="font-size:10px;color:var(--white3)">💔 1d</div></div><div style="font-size:16px">❌</div><div style="font-family:var(--cinzel);font-size:13px;color:var(--red)">42</div></div>
+        </div>
+      </div>
+      <div class="m-card" style="background:rgba(212,92,92,0.06);border-color:rgba(212,92,92,0.2)">
+        <div style="display:flex;align-items:center;gap:14px"><span style="font-size:24px">🚨</span><div><div style="font-family:var(--cinzel);font-size:12px;letter-spacing:1px;color:var(--red)">I'M NOT OKAY</div><div style="font-family:var(--cormorant);font-style:italic;font-size:12px;color:var(--white3);margin-top:3px">Silent signal to Warriors</div></div></div>
+      </div>
+    </div>
+    <div class="m-bottom-nav">
+      <div class="m-nav-item" onclick="mGoTo('home',this)"><div class="m-nav-icon">⊙</div><div class="m-nav-label">HOME</div></div>
+      <div class="m-nav-item active" onclick="mGoTo('circles',this)"><div class="m-nav-icon">◎</div><div class="m-nav-label">CIRCLE</div></div>
+      <div class="m-nav-item" onclick="mGoTo('brahma-m',this)"><div class="m-nav-icon">✦</div><div class="m-nav-label">BRAHMA</div></div>
+      <div class="m-nav-item" onclick="mGoTo('intel',this)"><div class="m-nav-icon">◈</div><div class="m-nav-label">INTEL</div></div>
+      <div class="m-nav-item" onclick="mGoTo('identity',this)"><div class="m-nav-icon">◉</div><div class="m-nav-label">SELF</div></div>
+    </div>
+  </div>
+
+  <!-- Mobile Brahma AI -->
+  <div class="m-screen" id="ms-brahma-m">
+    <div class="m-status"><span class="m-status-time">9:41</span></div>
+    <div style="padding:8px 16px 12px;border-bottom:1px solid var(--border)">
+      <div style="font-family:var(--cinzel);font-size:16px;color:var(--white);letter-spacing:2px;display:flex;align-items:center;gap:8px"><span>🔱</span> BRAHMA AI</div>
+      <div style="font-family:var(--cormorant);font-style:italic;font-size:12px;color:var(--white3);margin-top:2px">Your intelligent life guide</div>
+    </div>
+    <div style="flex:1;overflow-y:auto;padding:14px 14px 0;scrollbar-width:none" id="m-chat-messages">
+      <div class="chat-msg" style="margin-bottom:16px">
+        <div class="chat-avatar ai-avatar" style="width:32px;height:32px;font-size:14px">🔱</div>
+        <div>
+          <div class="ai-name" style="font-size:8px">BRAHMA</div>
+          <div class="chat-bubble ai-bubble" style="font-size:13px;padding:12px 14px">Namaste Arjun. I am with you.<br><br>Your discipline is rising. What shall we work on today?</div>
+        </div>
+      </div>
+    </div>
+    <div style="padding:10px 14px 16px;border-top:1px solid var(--border);display:flex;gap:8px">
+      <input type="text" id="m-chat-input" placeholder="Ask Brahma..." style="flex:1;background:var(--surface);border:1px solid var(--border2);border-radius:12px;padding:10px 14px;font-size:13px;color:var(--white);outline:none;font-family:var(--dm)" onkeydown="handleMobileKey(event)"/>
+      <button onclick="sendMobileMsg()" style="width:40px;height:40px;border-radius:50%;background:var(--gold);border:none;cursor:pointer;font-size:14px">↑</button>
+    </div>
+    <div class="m-bottom-nav">
+      <div class="m-nav-item" onclick="mGoTo('home',this)"><div class="m-nav-icon">⊙</div><div class="m-nav-label">HOME</div></div>
+      <div class="m-nav-item" onclick="mGoTo('circles',this)"><div class="m-nav-icon">◎</div><div class="m-nav-label">CIRCLE</div></div>
+      <div class="m-nav-item active" onclick="mGoTo('brahma-m',this)"><div class="m-nav-icon">✦</div><div class="m-nav-label">BRAHMA</div></div>
+      <div class="m-nav-item" onclick="mGoTo('intel',this)"><div class="m-nav-icon">◈</div><div class="m-nav-label">INTEL</div></div>
+      <div class="m-nav-item" onclick="mGoTo('identity',this)"><div class="m-nav-icon">◉</div><div class="m-nav-label">SELF</div></div>
+    </div>
+  </div>
+
+  <!-- Mobile Intel -->
+  <div class="m-screen" id="ms-intel">
+    <div class="m-status"><span class="m-status-time">9:41</span></div>
+    <div class="m-scroll">
+      <div style="padding:8px 16px 16px">
+        <div style="font-family:var(--cinzel);font-size:20px;color:var(--white);letter-spacing:2px">INTELLIGENCE</div>
+        <div style="font-family:var(--cormorant);font-style:italic;font-size:14px;color:var(--white3);margin-top:3px">Brahmic wisdom</div>
+      </div>
+      <div class="m-card" style="background:linear-gradient(135deg,rgba(212,168,83,0.08),rgba(212,168,83,0.02));border-color:rgba(212,168,83,0.18)">
+        <div style="font-family:var(--cinzel);font-size:9px;letter-spacing:2px;color:var(--gold);margin-bottom:14px">WEEK 12 REPORT</div>
+        <div style="display:flex;gap:10px">
+          <div style="flex:1;text-align:center"><div style="font-family:var(--cinzel);font-size:26px;color:var(--white)">68</div><div style="font-size:9px;color:var(--white3);letter-spacing:1px">SCORE</div><div style="font-size:10px;color:var(--green)">↑+5</div></div>
+          <div style="flex:1;text-align:center"><div style="font-family:var(--cinzel);font-size:26px;color:var(--white)">84%</div><div style="font-size:9px;color:var(--white3);letter-spacing:1px">KARMA</div><div style="font-size:10px;color:var(--green)">↑+11%</div></div>
+          <div style="flex:1;text-align:center"><div style="font-family:var(--cinzel);font-size:26px;color:var(--white)">12d</div><div style="font-size:9px;color:var(--white3);letter-spacing:1px">STREAK</div><div style="font-size:10px;color:var(--gold)">Best</div></div>
+        </div>
+      </div>
+      <div class="m-card" style="margin-bottom:10px"><div style="font-family:var(--cinzel);font-size:9px;letter-spacing:1.5px;color:var(--gold);margin-bottom:8px">⚡ PATTERN</div><div style="font-family:var(--cormorant);font-size:17px;color:var(--white);margin-bottom:6px">You peak at 9–11 AM</div><div style="font-family:var(--cormorant);font-size:13px;color:var(--white2);line-height:1.6">This is your brahma muhurta. Three weeks confirm it. Guard it ruthlessly.</div></div>
+      <div class="m-card" style="margin-bottom:10px;border-color:rgba(212,92,92,0.2)"><div style="font-family:var(--cinzel);font-size:9px;letter-spacing:1.5px;color:var(--red);margin-bottom:8px">⚠️ RISK</div><div style="font-family:var(--cormorant);font-size:17px;color:var(--white);margin-bottom:6px">Body is warning you</div><div style="font-family:var(--cormorant);font-size:13px;color:var(--white2);line-height:1.6">3 nights of poor sleep. Restore tonight.</div></div>
+    </div>
+    <div class="m-bottom-nav">
+      <div class="m-nav-item" onclick="mGoTo('home',this)"><div class="m-nav-icon">⊙</div><div class="m-nav-label">HOME</div></div>
+      <div class="m-nav-item" onclick="mGoTo('circles',this)"><div class="m-nav-icon">◎</div><div class="m-nav-label">CIRCLE</div></div>
+      <div class="m-nav-item" onclick="mGoTo('brahma-m',this)"><div class="m-nav-icon">✦</div><div class="m-nav-label">BRAHMA</div></div>
+      <div class="m-nav-item active" onclick="mGoTo('intel',this)"><div class="m-nav-icon">◈</div><div class="m-nav-label">INTEL</div></div>
+      <div class="m-nav-item" onclick="mGoTo('identity',this)"><div class="m-nav-icon">◉</div><div class="m-nav-label">SELF</div></div>
+    </div>
+  </div>
+
+  <!-- Mobile Identity -->
+  <div class="m-screen" id="ms-identity">
+    <div class="m-status"><span class="m-status-time">9:41</span></div>
+    <div class="m-scroll">
+      <div style="padding:8px 16px 16px;text-align:center">
+        <div style="width:68px;height:68px;border-radius:50%;background:var(--golddim);border:2px solid var(--gold);display:flex;align-items:center;justify-content:center;font-size:30px;margin:0 auto 12px;box-shadow:0 0 20px rgba(212,168,83,0.3)">🧘</div>
+        <div style="font-family:var(--cinzel);font-size:18px;color:var(--white);letter-spacing:2px">ARJUN SHARMA</div>
+        <div style="font-family:var(--cormorant);font-style:italic;font-size:13px;color:var(--white3);margin-top:4px">साधक · Day 40</div>
+      </div>
+      <div class="m-card" style="text-align:center;background:linear-gradient(135deg,rgba(212,168,83,0.08),rgba(123,94,167,0.05))">
+        <div style="font-family:var(--cinzel);font-size:60px;font-weight:900;color:var(--gold);line-height:1;filter:drop-shadow(0 0 14px rgba(212,168,83,0.4))">68</div>
+        <div style="font-family:var(--cormorant);font-style:italic;font-size:15px;color:var(--white3);margin-top:4px">Disciplined — अनुशासित</div>
+      </div>
+      <div class="m-card">
+        <div style="font-family:var(--cinzel);font-size:9px;letter-spacing:2px;color:var(--white3);margin-bottom:12px">MILESTONES — उपलब्धियाँ</div>
+        <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)"><span style="font-size:22px">🔥</span><div><div style="font-family:var(--cormorant);font-size:15px;color:var(--white)">12-Day Agni Streak</div><div style="font-size:10px;color:var(--white3)">Personal best · Today</div></div></div>
+        <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)"><span style="font-size:22px">💰</span><div><div style="font-family:var(--cormorant);font-size:15px;color:var(--white)">Artha — 7 Days Clean</div><div style="font-size:10px;color:var(--white3)">March 11–18</div></div></div>
+        <div style="display:flex;align-items:center;gap:12px;padding:10px 0"><span style="font-size:22px">🪷</span><div><div style="font-family:var(--cormorant);font-size:15px;color:var(--white)">30-Day Sadhak</div><div style="font-size:10px;color:var(--white3)">February 2025</div></div></div>
+      </div>
+    </div>
+    <div class="m-bottom-nav">
+      <div class="m-nav-item" onclick="mGoTo('home',this)"><div class="m-nav-icon">⊙</div><div class="m-nav-label">HOME</div></div>
+      <div class="m-nav-item" onclick="mGoTo('circles',this)"><div class="m-nav-icon">◎</div><div class="m-nav-label">CIRCLE</div></div>
+      <div class="m-nav-item" onclick="mGoTo('brahma-m',this)"><div class="m-nav-icon">✦</div><div class="m-nav-label">BRAHMA</div></div>
+      <div class="m-nav-item" onclick="mGoTo('intel',this)"><div class="m-nav-icon">◈</div><div class="m-nav-label">INTEL</div></div>
+      <div class="m-nav-item active" onclick="mGoTo('identity',this)"><div class="m-nav-icon">◉</div><div class="m-nav-label">SELF</div></div>
+    </div>
+  </div>
+</div><!-- end phone-frame -->
+
+</div><!-- end shell -->
+
+<script>
+// ═══ COSMOS CANVAS ═══
+const canvas = document.getElementById('cosmos');
+const ctx = canvas.getContext('2d');
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+const stars = Array.from({length:200},()=>({
+  x:Math.random()*canvas.width,
+  y:Math.random()*canvas.height,
+  r:Math.random()*1.2+0.2,
+  a:Math.random(),
+  da:Math.random()*0.003+0.001,
+  dir:Math.random()>0.5?1:-1
+}));
+
+const particles = Array.from({length:30},()=>({
+  x:Math.random()*canvas.width,
+  y:Math.random()*canvas.height,
+  vx:(Math.random()-0.5)*0.3,
+  vy:(Math.random()-0.5)*0.3,
+  r:Math.random()*60+20,
+  a:Math.random()*0.04+0.01,
+  hue:Math.random()>0.6?30:260
+}));
+
+function drawCosmos(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  // nebula
+  particles.forEach(p=>{
+    const g=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,p.r);
+    g.addColorStop(0,`hsla(${p.hue},60%,40%,${p.a})`);
+    g.addColorStop(1,'transparent');
+    ctx.fillStyle=g;
+    ctx.fillRect(p.x-p.r,p.y-p.r,p.r*2,p.r*2);
+    p.x+=p.vx;p.y+=p.vy;
+    if(p.x<-p.r)p.x=canvas.width+p.r;
+    if(p.x>canvas.width+p.r)p.x=-p.r;
+    if(p.y<-p.r)p.y=canvas.height+p.r;
+    if(p.y>canvas.height+p.r)p.y=-p.r;
+  });
+  // stars
+  stars.forEach(s=>{
+    s.a+=s.da*s.dir;
+    if(s.a>1||s.a<0.1)s.dir*=-1;
+    ctx.beginPath();
+    ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+    ctx.fillStyle=`rgba(255,240,200,${s.a})`;
+    ctx.fill();
+  });
+  requestAnimationFrame(drawCosmos);
+}
+drawCosmos();
+window.addEventListener('resize',()=>{canvas.width=window.innerWidth;canvas.height=window.innerHeight;});
+
+// ═══ VIEW TOGGLE ═══
+function setView(v,btn){
+  document.querySelectorAll('.vt-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const sidebar=document.getElementById('sidebar');
+  const webMain=document.getElementById('web-main');
+  const phone=document.getElementById('phone-frame');
+  if(v==='mobile'){
+    sidebar.style.display='none';
+    webMain.style.display='none';
+    phone.classList.add('visible');
+  } else {
+    sidebar.style.display='flex';
+    webMain.style.display='flex';
+    phone.classList.remove('visible');
+  }
+}
+
+// ═══ WEB NAV ═══
+const pageMeta={
+  dashboard:['DASHBOARD','— कर्म भूमि —'],
+  circles:['CIRCLES','— संघ शक्ति —'],
+  intel:['INTELLIGENCE','— ज्ञान दृष्टि —'],
+  brahma:['BRAHMA AI','— ब्रह्म मार्गदर्शक —'],
+  finance:['FINANCE','— अर्थ धर्म —'],
+  identity:['IDENTITY','— आत्म दर्शन —']
+};
+function goTo(page,el){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  el.classList.add('active');
+  document.getElementById('topbar-title').textContent=pageMeta[page][0];
+  document.getElementById('topbar-sanskrit').textContent=pageMeta[page][1];
+}
+
+// ═══ MOBILE NAV ═══
+function mGoTo(screen,el){
+  document.querySelectorAll('.m-screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.m-nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('ms-'+screen).classList.add('active');
+  // update all nav items in that screen
+  el.classList.add('active');
+}
+
+// ═══ TASKS ═══
+function toggleKarma(row){row.classList.toggle('done');}
+
+// ═══ GRAPH ═══
+function setGTab(el){
+  document.querySelectorAll('.g-tab-web').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+}
+
+// ═══ AI RESPONSES ═══
+const brahmaResponses = {
+  default:[
+    "The Gita teaches: results are not in your hands — only the action. Your consistency this week reflects this wisdom.",
+    "Your discipline score of 72 suggests strong tapas. But health at 58 is a warning. The body is the chariot of the soul — maintain it.",
+    "In 40 days on SUTRA, you have improved your Life Score by 18 points. This is not numbers — this is dharma in motion.",
+    "Brahma muhurta — the hour before sunrise — is said to be the most powerful time for sadhana. Your data confirms: 9 AM is your power window.",
+    "The Arthashastra says wealth preserved is wealth doubled. Your 7 days of artha discipline is wisdom in action.",
+    "You are in the stage of building. Every streak day is a brick. Do not count the bricks — lay them.",
+  ],
+  sleep:["Sleep is not rest — it is repair. Sushruta, the father of surgery, wrote that proper sleep is the foundation of all health. Three missed nights create a debt that compounds. Sleep before 11 PM tonight.",],
+  score:["Your score dropped because health fell 8 points this week. The formula: Life Score = (Tapas×0.35)+(Health×0.25)+(Artha×0.20)+(Vidyā×0.20). Restore sleep and it will rise within 3 days.",],
+  finance:["Your artha score is 74. Needs are 62%, wants 26%, waste 12%. The Chanakya principle: reduce waste to under 8% and your score crosses 80. You are close.",],
+  mantra:["Your mantra for today: 'उत्तिष्ठत जाग्रत प्राप्य वरान्निबोधत।' — Rise. Awaken. Seek the wise. Act.",],
+};
+
+function getBrahmaResponse(msg){
+  const m=msg.toLowerCase();
+  if(m.includes('sleep')||m.includes('rest'))return brahmaResponses.sleep[0];
+  if(m.includes('score')||m.includes('drop'))return brahmaResponses.score[0];
+  if(m.includes('finance')||m.includes('money')||m.includes('spend'))return brahmaResponses.finance[0];
+  if(m.includes('mantra')||m.includes('quote'))return brahmaResponses.mantra[0];
+  return brahmaResponses.default[Math.floor(Math.random()*brahmaResponses.default.length)];
+}
+
+function appendMsg(containerId,role,text){
+  const c=document.getElementById(containerId);
+  const div=document.createElement('div');
+  div.className='chat-msg'+(role==='user'?' user':'');
+  if(role==='ai'){
+    div.innerHTML=`<div class="chat-avatar ai-avatar">🔱</div><div><div class="ai-name">BRAHMA</div><div class="chat-bubble ai-bubble">${text}</div></div>`;
+  } else {
+    div.innerHTML=`<div class="chat-bubble user-bubble">${text}</div><div class="chat-avatar user-avatar-chat">🧘</div>`;
+  }
+  c.appendChild(div);
+  c.scrollTop=c.scrollHeight;
+}
+
+function appendThinking(containerId){
+  const c=document.getElementById(containerId);
+  const div=document.createElement('div');
+  div.className='chat-msg';div.id='thinking-'+containerId;
+  div.innerHTML=`<div class="chat-avatar ai-avatar">🔱</div><div><div class="chat-bubble ai-bubble"><div class="chat-thinking"><div class="dot-pulse"></div><div class="dot-pulse"></div><div class="dot-pulse"></div></div></div></div>`;
+  c.appendChild(div);c.scrollTop=c.scrollHeight;
+}
+
+function sendMessage(){
+  const inp=document.getElementById('chat-input');
+  const msg=inp.value.trim();if(!msg)return;
+  appendMsg('chat-messages','user',msg);
+  inp.value='';
+  appendThinking('chat-messages');
+  setTimeout(()=>{
+    const t=document.getElementById('thinking-chat-messages');
+    if(t)t.remove();
+    appendMsg('chat-messages','ai',getBrahmaResponse(msg));
+  },1400);
+}
+
+function sendChip(el){
+  const msg=el.textContent;
+  appendMsg('chat-messages','user',msg);
+  appendThinking('chat-messages');
+  setTimeout(()=>{
+    const t=document.getElementById('thinking-chat-messages');
+    if(t)t.remove();
+    appendMsg('chat-messages','ai',getBrahmaResponse(msg));
+  },1400);
+}
+
+function handleKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage();}}
+
+function sendMobileMsg(){
+  const inp=document.getElementById('m-chat-input');
+  const msg=inp.value.trim();if(!msg)return;
+  appendMsg('m-chat-messages','user',msg);
+  inp.value='';
+  appendThinking('m-chat-messages');
+  setTimeout(()=>{
+    const t=document.getElementById('thinking-m-chat-messages');
+    if(t)t.remove();
+    appendMsg('m-chat-messages','ai',getBrahmaResponse(msg));
+  },1400);
+}
+function handleMobileKey(e){if(e.key==='Enter'){e.preventDefault();sendMobileMsg();}}
+</script>
+</body>
+</html>

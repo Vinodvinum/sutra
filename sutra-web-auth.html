@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SUTRA — Web Auth</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;900&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#05060A;--bg2:#080B12;--bg3:#0C1018;
+  --surface:#111620;--surface2:#181E2C;
+  --border:rgba(255,220,130,0.07);--border2:rgba(255,220,130,0.14);
+  --gold:#D4A853;--gold2:#F0C97A;--golddim:rgba(212,168,83,0.10);
+  --goldglow:rgba(212,168,83,0.22);--saffron:#E8722A;--sacred:#7B5EA7;
+  --white:#F2EDE4;--white2:#A89F94;--white3:#574F47;
+  --red:#D45C5C;--green:#52C97A;--blue:#4E8FD4;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--white);overflow:hidden;}
+#cosmos{position:fixed;inset:0;z-index:0;pointer-events:none;}
+.shell{position:relative;z-index:1;display:flex;height:100vh;}
+
+/* SWITCHER */
+.switcher{position:fixed;top:18px;left:50%;transform:translateX(-50%);display:flex;gap:5px;z-index:1000;background:rgba(5,6,10,0.92);padding:6px;border-radius:24px;border:1px solid var(--border2);backdrop-filter:blur(20px);}
+.sw{padding:7px 16px;border-radius:18px;font-family:'Cinzel',serif;font-size:9px;letter-spacing:1.5px;cursor:pointer;transition:all 0.2s;color:var(--white3);border:none;background:transparent;}
+.sw.active{background:var(--golddim);color:var(--gold);border:1px solid var(--border2);}
+.sw:hover{color:var(--white2);}
+
+/* LEFT PANEL */
+.left{width:480px;flex-shrink:0;background:rgba(8,11,18,0.88);border-right:1px solid var(--border);display:flex;flex-direction:column;position:relative;overflow:hidden;backdrop-filter:blur(30px);}
+.left::after{content:'';position:absolute;top:0;right:0;width:1px;height:100%;background:linear-gradient(180deg,transparent,var(--gold) 30%,var(--saffron) 70%,transparent);opacity:0.2;}
+
+/* BRAND */
+.brand{padding:44px 52px 0;display:flex;align-items:center;gap:14px;flex-shrink:0;margin-bottom:40px;}
+.brand-om{font-size:26px;color:var(--gold);filter:drop-shadow(0 0 10px rgba(212,168,83,0.6));animation:om 3s ease-in-out infinite;}
+@keyframes om{0%,100%{filter:drop-shadow(0 0 10px rgba(212,168,83,0.6))}50%{filter:drop-shadow(0 0 22px rgba(212,168,83,0.9))}}
+.brand-name{font-family:'Cinzel',serif;font-size:20px;font-weight:900;color:var(--gold);letter-spacing:4px;}
+.brand-tag{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:12px;color:var(--white3);letter-spacing:1px;margin-top:1px;}
+
+/* PAGES */
+.page{display:none;flex-direction:column;height:100%;}
+.page.active{display:flex;animation:up 0.35s cubic-bezier(.4,0,.2,1);}
+@keyframes up{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.pscroll{flex:1;overflow-y:auto;padding:0 52px 40px;scrollbar-width:thin;scrollbar-color:var(--surface2) transparent;}
+.pscroll::-webkit-scrollbar{width:3px;}
+.pscroll::-webkit-scrollbar-thumb{background:var(--surface2);}
+
+/* PAGE HEADER */
+.back{display:inline-flex;align-items:center;gap:8px;font-family:'Cinzel',serif;font-size:9px;letter-spacing:1.5px;color:var(--white3);cursor:pointer;margin-bottom:24px;transition:color 0.2s;}
+.back:hover{color:var(--gold);}
+.ph{font-family:'Cinzel',serif;font-size:26px;font-weight:900;color:var(--white);letter-spacing:3px;margin-bottom:6px;line-height:1.2;}
+.ps{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:16px;color:var(--white3);margin-bottom:32px;}
+
+/* INPUT */
+.ig{margin-bottom:16px;}
+.il{display:block;font-family:'Cinzel',serif;font-size:9px;letter-spacing:2px;color:var(--gold);margin-bottom:8px;}
+.iw{position:relative;}
+.inf{width:100%;padding:15px 18px;background:var(--surface);color:var(--white);border:1px solid var(--border2);border-radius:14px;font-family:'DM Sans',sans-serif;font-size:14px;outline:none;transition:border-color 0.25s,box-shadow 0.25s;}
+.inf::placeholder{color:var(--white3);}
+.inf:focus{border-color:rgba(212,168,83,0.5);box-shadow:0 0 0 4px rgba(212,168,83,0.07);}
+.eye{position:absolute;right:16px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--white3);font-size:14px;padding:4px;transition:color 0.2s;}
+.eye:hover{color:var(--gold);}
+
+/* BUTTONS */
+.btn-g{width:100%;padding:17px;background:linear-gradient(135deg,var(--gold),var(--gold2));color:#05060A;border:none;border-radius:14px;font-family:'Cinzel',serif;font-size:12px;font-weight:700;letter-spacing:2.5px;cursor:pointer;transition:all 0.2s;margin-top:8px;position:relative;overflow:hidden;}
+.btn-g:hover{filter:brightness(1.08);transform:translateY(-1px);box-shadow:0 8px 24px rgba(212,168,83,0.25);}
+.btn-g:active{transform:scale(0.99);}
+.btn-g:disabled{opacity:0.7;cursor:not-allowed;transform:none;}
+.btn-o{width:100%;padding:15px;background:transparent;color:var(--gold);border:1px solid var(--border2);border-radius:14px;font-family:'Cinzel',serif;font-size:11px;letter-spacing:2px;cursor:pointer;transition:all 0.2s;margin-top:10px;}
+.btn-o:hover{background:var(--golddim);}
+.btn-gg{width:100%;padding:14px;background:var(--surface);color:var(--white2);border:1px solid var(--border2);border-radius:14px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all 0.2s;margin-top:10px;display:flex;align-items:center;justify-content:center;gap:10px;}
+.btn-gg:hover{border-color:rgba(255,220,130,0.3);color:var(--white);}
+.gi{width:20px;height:20px;border-radius:50%;background:white;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#4285F4;flex-shrink:0;}
+
+/* DIVIDER */
+.div{display:flex;align-items:center;gap:14px;margin:18px 0;font-family:'Cormorant Garamond',serif;font-style:italic;font-size:14px;color:var(--white3);}
+.div::before,.div::after{content:'';flex:1;height:1px;background:var(--border2);}
+
+/* LINKS */
+.lrow{text-align:center;margin-top:18px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--white3);}
+.lrow a{color:var(--gold);cursor:pointer;}
+.lrow a:hover{text-decoration:underline;}
+.frow{text-align:right;margin-top:6px;}
+.frow a{font-family:'DM Sans',sans-serif;font-size:12px;color:var(--gold);cursor:pointer;}
+.frow a:hover{text-decoration:underline;}
+
+/* ERROR/SUCCESS */
+.err{font-size:13px;color:var(--red);margin-top:12px;font-family:'DM Sans',sans-serif;display:none;padding:10px 14px;background:rgba(212,92,92,0.08);border:1px solid rgba(212,92,92,0.2);border-radius:10px;}
+.err.on{display:block;animation:up 0.3s ease;}
+.ok{font-size:14px;color:var(--green);margin-top:12px;font-family:'Cormorant Garamond',serif;font-style:italic;text-align:center;display:none;}
+.ok.on{display:block;}
+
+/* SPINNER */
+.sp{width:16px;height:16px;border-radius:50%;border:2px solid rgba(5,6,10,0.3);border-top-color:#05060A;animation:spin 0.7s linear infinite;display:inline-block;vertical-align:middle;margin-right:8px;}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* STEP INDICATOR */
+.steps{display:flex;align-items:center;gap:8px;margin-bottom:28px;}
+.sdot{width:8px;height:8px;border-radius:50%;background:var(--border2);transition:all 0.3s;}
+.sdot.on{background:var(--gold);box-shadow:0 0 8px rgba(212,168,83,0.5);}
+.sdot.done{background:var(--green);}
+.sline{flex:1;height:1px;background:var(--border2);}
+
+/* PILLAR CHIPS */
+.pgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0 24px;}
+.pchip{padding:16px 10px;border-radius:14px;text-align:center;border:1px solid var(--border2);background:var(--surface);cursor:pointer;transition:all 0.2s;}
+.pchip:hover{border-color:rgba(212,168,83,0.3);}
+.pchip.sel{background:var(--golddim);border-color:var(--gold);}
+.ci{font-size:22px;display:block;margin-bottom:6px;}
+.cn{font-family:'Cinzel',serif;font-size:10px;letter-spacing:1.5px;color:var(--white3);margin-bottom:2px;}
+.cs{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:13px;color:var(--white3);}
+.pchip.sel .cn{color:var(--gold);}
+.pchip.sel .cs{color:var(--gold2);}
+
+/* SUCCESS STATE */
+.sstate{display:none;text-align:center;padding:16px 0;}
+.sstate.on{display:block;animation:up 0.4s ease;}
+
+/* RIGHT PANEL */
+.right{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;overflow:hidden;padding:60px;}
+
+/* Mandala */
+.mandala-wrap{position:relative;width:240px;height:240px;margin-bottom:36px;}
+.msv{position:absolute;inset:0;animation:rslow 24s linear infinite;}
+@keyframes rslow{to{transform:rotate(360deg)}}
+.mom{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:80px;color:var(--gold);filter:drop-shadow(0 0 24px rgba(212,168,83,0.7));animation:om 3s ease-in-out infinite;line-height:1;}
+
+/* Quote */
+.rquote{text-align:center;max-width:360px;}
+.rq-san{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:22px;color:var(--gold2);margin-bottom:10px;line-height:1.55;}
+.rq-tr{font-family:'Cormorant Garamond',serif;font-size:15px;color:var(--white3);line-height:1.7;}
+.rq-src{font-family:'Cinzel',serif;font-size:9px;color:var(--white3);letter-spacing:2px;margin-top:12px;opacity:0.6;}
+
+/* Feature cards */
+.rfeats{display:flex;flex-direction:column;gap:14px;width:100%;max-width:360px;margin-top:36px;}
+.rfeat{display:flex;align-items:flex-start;gap:14px;padding:15px 18px;background:rgba(17,22,32,0.7);border:1px solid var(--border);border-radius:16px;backdrop-filter:blur(10px);}
+.rfi{font-size:20px;flex-shrink:0;margin-top:2px;}
+.rft{font-family:'Cinzel',serif;font-size:11px;color:var(--white);letter-spacing:1px;margin-bottom:3px;}
+.rfd{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:13px;color:var(--white3);line-height:1.5;}
+
+/* Steps list */
+.rsteps{display:flex;flex-direction:column;gap:18px;width:100%;max-width:340px;}
+.rstep{display:flex;align-items:center;gap:16px;}
+.rsnum{width:38px;height:38px;border-radius:50%;background:var(--golddim);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-family:'Cinzel',serif;font-size:15px;color:var(--gold);flex-shrink:0;}
+.rsnum.final{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#05060A;border-color:var(--gold);}
+.rstitle{font-family:'Cinzel',serif;font-size:11px;color:var(--white);letter-spacing:1px;margin-bottom:3px;}
+.rsdesc{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:13px;color:var(--white3);}
+
+/* Right panel stat row */
+.rstats{display:flex;gap:36px;margin-top:36px;}
+.rstat-num{font-family:'Cinzel',serif;font-size:28px;font-weight:900;color:var(--gold);line-height:1;margin-bottom:4px;}
+.rstat-lbl{font-family:'Cinzel',serif;font-size:8px;color:var(--white3);letter-spacing:2px;text-align:center;}
+
+/* baseline */
+.bom{font-size:40px;color:var(--gold);display:block;margin-bottom:16px;filter:drop-shadow(0 0 14px rgba(212,168,83,0.7));animation:om 3s ease-in-out infinite;}
+.seven{font-family:'Cinzel',serif;font-size:80px;font-weight:900;color:var(--gold);line-height:1;filter:drop-shadow(0 0 20px rgba(212,168,83,0.5));}
+.slbl{font-family:'Cinzel',serif;font-size:10px;letter-spacing:3px;color:var(--white3);margin-bottom:18px;}
+.bdesc{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:15px;color:var(--white2);line-height:1.8;margin-bottom:24px;max-width:340px;}
+.titem{display:flex;align-items:center;gap:14px;padding:13px 16px;margin-bottom:8px;background:var(--surface);border:1px solid var(--border);border-radius:13px;}
+.ticon{font-size:18px;flex-shrink:0;}
+.ttitle{font-family:'Cormorant Garamond',serif;font-size:15px;color:var(--white);margin-bottom:2px;}
+.tsub{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:13px;color:var(--white3);}
+
+/* welcome feature list */
+.wfeat{display:flex;align-items:center;gap:12px;margin-bottom:12px;}
+.wficon{font-size:18px;flex-shrink:0;}
+.wftitle{font-family:'Cinzel',serif;font-size:10px;letter-spacing:1px;color:var(--white);margin-bottom:2px;}
+.wfdesc{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:13px;color:var(--white3);}
+</style>
+</head>
+<body>
+<canvas id="cosmos"></canvas>
+
+<!-- SWITCHER -->
+<div class="switcher">
+  <button class="sw active" onclick="goTo('welcome',this)">WELCOME</button>
+  <button class="sw" onclick="goTo('login',this)">LOGIN</button>
+  <button class="sw" onclick="goTo('signup',this)">SIGN UP</button>
+  <button class="sw" onclick="goTo('forgot',this)">FORGOT</button>
+  <button class="sw" onclick="goTo('goals',this)">GOALS</button>
+  <button class="sw" onclick="goTo('baseline',this)">BASELINE</button>
+</div>
+
+<div class="shell">
+
+<!-- ══ LEFT PANEL ══ -->
+<div class="left">
+  <div class="brand">
+    <span class="brand-om">ॐ</span>
+    <div><div class="brand-name">SUTRA</div><div class="brand-tag">dharma • karma • moksha</div></div>
+  </div>
+
+  <!-- WELCOME -->
+  <div class="page active" id="p-welcome">
+    <div class="pscroll" style="display:flex;flex-direction:column;justify-content:center;flex:1">
+      <div class="ph" style="margin-bottom:6px">BEGIN YOUR<br>JOURNEY</div>
+      <div class="ps">आरंभ — The path of discipline starts here</div>
+      <button class="btn-g" onclick="goTo('signup',document.querySelectorAll('.sw')[2])">CREATE YOUR ACCOUNT</button>
+      <div class="div">already walking the path</div>
+      <button class="btn-o" onclick="goTo('login',document.querySelectorAll('.sw')[1])">SIGN IN TO SUTRA</button>
+      <div style="margin-top:32px;padding-top:24px;border-top:1px solid var(--border)">
+        <div style="font-family:'Cinzel',serif;font-size:9px;letter-spacing:2px;color:var(--white3);margin-bottom:16px">WHAT SUTRA TRACKS</div>
+        <div class="wfeat"><span class="wficon">🔱</span><div><div class="wftitle">TAPAS — Discipline</div><div class="wfdesc">Tasks, streaks, consistency</div></div></div>
+        <div class="wfeat"><span class="wficon">💚</span><div><div class="wftitle">ĀROGYA — Health</div><div class="wfdesc">Sleep, movement, vitality</div></div></div>
+        <div class="wfeat"><span class="wficon">💫</span><div><div class="wftitle">ARTHA — Finance</div><div class="wfdesc">Spending, saving, wealth</div></div></div>
+        <div class="wfeat"><span class="wficon">🪷</span><div><div class="wftitle">VIDYĀ — Growth</div><div class="wfdesc">Learning, goals, wisdom</div></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LOGIN -->
+  <div class="page" id="p-login">
+    <div class="pscroll">
+      <div class="back" onclick="goTo('welcome',document.querySelectorAll('.sw')[0])">← BACK</div>
+      <div class="ph">WELCOME<br>BACK</div>
+      <div class="ps">पुनरागमन — Return to the path</div>
+      <div class="ig"><label class="il">Email Address</label><div class="iw"><input class="inf" type="email" id="le" placeholder="your@email.com"/></div></div>
+      <div class="ig">
+        <label class="il">Password</label>
+        <div class="iw"><input class="inf" type="password" id="lp" placeholder="Your sacred key" style="padding-right:46px"/><button class="eye" onclick="toggleEye('lp',this)">👁</button></div>
+        <div class="frow"><a onclick="goTo('forgot',document.querySelectorAll('.sw')[3])">Forgot Password?</a></div>
+      </div>
+      <button class="btn-g" id="lbtn" onclick="doLogin()">SIGN IN TO SUTRA</button>
+      <div class="err" id="lerr">Incorrect email or password. Please try again.</div>
+      <div class="div">or continue with</div>
+      <button class="btn-gg" onclick="doGoogle()"><div class="gi">G</div>Continue with Google</button>
+      <div class="lrow">New to SUTRA? <a onclick="goTo('signup',document.querySelectorAll('.sw')[2])">Create your account</a></div>
+    </div>
+  </div>
+
+  <!-- SIGNUP -->
+  <div class="page" id="p-signup">
+    <div class="pscroll">
+      <div class="back" onclick="goTo('welcome',document.querySelectorAll('.sw')[0])">← BACK</div>
+      <div class="ph">CREATE<br>ACCOUNT</div>
+      <div class="ps">आरंभ — The beginning of discipline</div>
+      <div class="ig"><label class="il">Full Name</label><div class="iw"><input class="inf" type="text" id="sn" placeholder="Your true name"/></div></div>
+      <div class="ig"><label class="il">Email Address</label><div class="iw"><input class="inf" type="email" id="se" placeholder="your@email.com"/></div></div>
+      <div class="ig"><label class="il">Password</label><div class="iw"><input class="inf" type="password" id="sp" placeholder="Min 8 characters" style="padding-right:46px"/><button class="eye" onclick="toggleEye('sp',this)">👁</button></div></div>
+      <div class="ig"><label class="il">Confirm Password</label><div class="iw"><input class="inf" type="password" id="sc" placeholder="Repeat your key" style="padding-right:46px"/><button class="eye" onclick="toggleEye('sc',this)">👁</button></div></div>
+      <button class="btn-g" id="sbtn" onclick="doSignup()">CREATE ACCOUNT</button>
+      <div class="err" id="serr"></div>
+      <div class="div">or</div>
+      <button class="btn-gg" onclick="doGoogle()"><div class="gi">G</div>Sign up with Google</button>
+      <div class="lrow">Already have an account? <a onclick="goTo('login',document.querySelectorAll('.sw')[1])">Sign in</a></div>
+      <div style="height:20px"></div>
+    </div>
+  </div>
+
+  <!-- FORGOT -->
+  <div class="page" id="p-forgot">
+    <div class="pscroll">
+      <div class="back" onclick="goTo('login',document.querySelectorAll('.sw')[1])">← BACK TO LOGIN</div>
+      <div class="ph">RESET<br>YOUR PATH</div>
+      <div class="ps">We will send a reset link to your email</div>
+      <div id="fform">
+        <div class="ig"><label class="il">Email Address</label><div class="iw"><input class="inf" type="email" id="fe" placeholder="your@email.com"/></div></div>
+        <button class="btn-g" id="fbtn" onclick="doForgot()">SEND RESET LINK</button>
+        <div class="err" id="ferr">Please enter a valid email address.</div>
+      </div>
+      <div class="sstate" id="fsuccess">
+        <div style="font-size:52px;margin-bottom:16px">✉️</div>
+        <div style="font-family:'Cinzel',serif;font-size:18px;font-weight:700;color:var(--green);letter-spacing:2px;margin-bottom:8px">LINK SENT</div>
+        <div style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:16px;color:var(--white2);line-height:1.7;margin-bottom:24px">Check your inbox. The reset link will guide you back to your dharmic path.</div>
+        <button class="btn-o" onclick="goTo('login',document.querySelectorAll('.sw')[1])">BACK TO LOGIN</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- GOALS -->
+  <div class="page" id="p-goals">
+    <div class="pscroll">
+      <div class="steps"><div class="sdot on"></div><div class="sline"></div><div class="sdot"></div></div>
+      <div class="ph">YOUR DHARMA<br>GOALS</div>
+      <div class="ps">What are you here to master?</div>
+      <div class="ig"><label class="il">Goal 1 — Primary Mission *</label><div class="iw"><input class="inf" type="text" id="g1" placeholder="e.g. Build unbreakable discipline"/></div></div>
+      <div class="ig"><label class="il">Goal 2 — Second Focus</label><div class="iw"><input class="inf" type="text" id="g2" placeholder="e.g. Reach financial freedom"/></div></div>
+      <div class="ig"><label class="il">Goal 3 — Third Commitment</label><div class="iw"><input class="inf" type="text" id="g3" placeholder="e.g. Master a new skill"/></div></div>
+      <div style="font-family:'Cinzel',serif;font-size:9px;letter-spacing:2px;color:var(--gold);margin-bottom:6px;margin-top:4px">SELECT YOUR PILLARS *</div>
+      <div style="font-family:'DM Sans',sans-serif;font-size:11px;color:var(--white3);margin-bottom:12px;text-align:center">Choose at least 2 areas to track</div>
+      <div class="pgrid">
+        <div class="pchip sel" onclick="toggleChip(this)"><span class="ci">🔱</span><div class="cn">TAPAS</div><div class="cs">Discipline</div></div>
+        <div class="pchip sel" onclick="toggleChip(this)"><span class="ci">💚</span><div class="cn">ĀROGYA</div><div class="cs">Health</div></div>
+        <div class="pchip" onclick="toggleChip(this)"><span class="ci">💫</span><div class="cn">ARTHA</div><div class="cs">Finance</div></div>
+        <div class="pchip" onclick="toggleChip(this)"><span class="ci">🪷</span><div class="cn">VIDYĀ</div><div class="cs">Growth</div></div>
+      </div>
+      <div class="err" id="gerr" style="margin-bottom:12px"></div>
+      <button class="btn-g" onclick="doGoals()">NEXT — BASELINE WEEK →</button>
+      <div style="height:24px"></div>
+    </div>
+  </div>
+
+  <!-- BASELINE -->
+  <div class="page" id="p-baseline">
+    <div class="pscroll">
+      <div class="steps" style="margin-bottom:24px"><div class="sdot done"></div><div class="sline"></div><div class="sdot on"></div></div>
+      <div style="text-align:center;margin-bottom:28px">
+        <span class="bom">ॐ</span>
+        <div style="font-family:'Cinzel',serif;font-size:18px;font-weight:700;letter-spacing:3px;color:var(--white);margin-bottom:4px">THE WATCHING WEEK</div>
+        <div style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:13px;color:var(--white3);margin-bottom:18px">पर्यवेक्षण काल — Observation period</div>
+        <div class="seven">7</div>
+        <div class="slbl">DAYS OF SILENCE</div>
+        <div class="bdesc">SUTRA will observe your patterns silently for 7 days before calculating your first Life Score. Simply log your daily activities. Your dharmic journey begins now.</div>
+      </div>
+      <div class="titem"><span class="ticon">🔱</span><div><div class="ttitle">Discipline patterns</div><div class="tsub">Task completion, focus time, streak building</div></div></div>
+      <div class="titem"><span class="ticon">💚</span><div><div class="ttitle">Sleep and movement</div><div class="tsub">Hours slept, consistency, exercise</div></div></div>
+      <div class="titem"><span class="ticon">💫</span><div><div class="ttitle">Spending behavior</div><div class="tsub">Needs, wants, and waste patterns</div></div></div>
+      <div class="titem"><span class="ticon">🪷</span><div><div class="ttitle">Learning habits</div><div class="tsub">Reading, courses, reflection entries</div></div></div>
+      <button class="btn-g" style="margin-top:20px" onclick="doBaseline()">I UNDERSTAND — BEGIN ✦</button>
+      <div style="height:28px"></div>
+    </div>
+  </div>
+
+</div><!-- end left -->
+
+<!-- ══ RIGHT PANEL ══ -->
+<div class="right">
+
+  <!-- Welcome right -->
+  <div id="rr-welcome">
+    <div class="mandala-wrap">
+      <svg class="msv" viewBox="0 0 240 240">
+        <circle cx="120" cy="120" r="110" fill="none" stroke="rgba(212,168,83,0.08)" stroke-width="1" stroke-dasharray="6 12"/>
+        <circle cx="120" cy="120" r="94" fill="none" stroke="rgba(212,168,83,0.05)" stroke-width="1" stroke-dasharray="3 9"/>
+        <g opacity="0.14" transform="translate(120,120)">
+          <ellipse rx="6" ry="14" fill="var(--gold)" transform="rotate(0) translate(0,-84)"/>
+          <ellipse rx="6" ry="14" fill="var(--gold)" transform="rotate(45) translate(0,-84)"/>
+          <ellipse rx="6" ry="14" fill="var(--gold)" transform="rotate(90) translate(0,-84)"/>
+          <ellipse rx="6" ry="14" fill="var(--gold)" transform="rotate(135) translate(0,-84)"/>
+          <ellipse rx="6" ry="14" fill="var(--gold)" transform="rotate(180) translate(0,-84)"/>
+          <ellipse rx="6" ry="14" fill="var(--gold)" transform="rotate(225) translate(0,-84)"/>
+          <ellipse rx="6" ry="14" fill="var(--gold)" transform="rotate(270) translate(0,-84)"/>
+          <ellipse rx="6" ry="14" fill="var(--gold)" transform="rotate(315) translate(0,-84)"/>
+        </g>
+        <circle cx="120" cy="120" r="90" fill="none" stroke="url(#rg)" stroke-width="3" stroke-linecap="round" stroke-dasharray="236 330" transform="rotate(-90 120 120)" opacity="0.5"/>
+        <defs><linearGradient id="rg" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" style="stop-color:#D4A853"/><stop offset="100%" style="stop-color:#F0C97A"/></linearGradient></defs>
+      </svg>
+      <div class="mom">ॐ</div>
+    </div>
+    <div class="rquote">
+      <div class="rq-san">"कर्म करो, फल की<br>चिंता मत करो"</div>
+      <div class="rq-tr">Act with full commitment.<br>Do not worry about the results.</div>
+      <div class="rq-src">— BHAGAVAD GITA 2.47</div>
+    </div>
+    <div class="rstats">
+      <div class="rstat"><div class="rstat-num">68</div><div class="rstat-lbl">Avg Score</div></div>
+      <div class="rstat"><div class="rstat-num">40+</div><div class="rstat-lbl">Days Tracked</div></div>
+      <div class="rstat"><div class="rstat-num">4</div><div class="rstat-lbl">Life Pillars</div></div>
+    </div>
+  </div>
+
+  <!-- Login right -->
+  <div id="rr-login" style="display:none;text-align:center;max-width:380px">
+    <div style="font-size:50px;margin-bottom:24px;filter:drop-shadow(0 0 18px rgba(212,168,83,0.6));animation:om 3s ease-in-out infinite">ॐ</div>
+    <div class="rfeats">
+      <div class="rfeat"><span class="rfi">⊙</span><div><div class="rft">LIFE SCORE</div><div class="rfd">One number that reflects your entire life — discipline, health, finance, and growth.</div></div></div>
+      <div class="rfeat"><span class="rfi">◎</span><div><div class="rft">SACRED CIRCLES</div><div class="rfd">Silent accountability with people on the same path. No chat — only performance.</div></div></div>
+      <div class="rfeat"><span class="rfi">✦</span><div><div class="rft">BRAHMA AI</div><div class="rfd">Your intelligent guide, speaking Gita wisdom personalized to your exact data.</div></div></div>
+    </div>
+  </div>
+
+  <!-- Signup right -->
+  <div id="rr-signup" style="display:none;max-width:360px;width:100%">
+    <div style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:3px;color:var(--white3);margin-bottom:28px;text-align:center">YOUR JOURNEY IN 4 STEPS</div>
+    <div class="rsteps">
+      <div class="rstep"><div class="rsnum">1</div><div><div class="rstitle">CREATE ACCOUNT</div><div class="rsdesc">Set up your sacred identity</div></div></div>
+      <div class="rstep"><div class="rsnum">2</div><div><div class="rstitle">SET YOUR GOALS</div><div class="rsdesc">Define what you are here to master</div></div></div>
+      <div class="rstep"><div class="rsnum">3</div><div><div class="rstitle">7 DAY BASELINE</div><div class="rsdesc">SUTRA observes your patterns silently</div></div></div>
+      <div class="rstep"><div class="rsnum final">✦</div><div><div class="rstitle" style="color:var(--gold)">LIFE SCORE REVEALED</div><div class="rsdesc">The dharmic journey begins</div></div></div>
+    </div>
+  </div>
+
+  <!-- Shared right (forgot/goals/baseline) -->
+  <div id="rr-shared" style="display:none;text-align:center;max-width:360px">
+    <div style="font-size:50px;margin-bottom:24px;filter:drop-shadow(0 0 18px rgba(212,168,83,0.6));animation:om 3s ease-in-out infinite">ॐ</div>
+    <div class="rquote">
+      <div class="rq-san" id="rqs"></div>
+      <div class="rq-tr" id="rqt"></div>
+      <div class="rq-src" id="rqsr"></div>
+    </div>
+  </div>
+
+</div><!-- end right -->
+</div><!-- end shell -->
+
+<script>
+// COSMOS
+const cv=document.getElementById('cosmos'),cx=cv.getContext('2d');
+cv.width=window.innerWidth;cv.height=window.innerHeight;
+const ST=Array.from({length:200},()=>({x:Math.random()*cv.width,y:Math.random()*cv.height,r:Math.random()*1.2+0.2,a:Math.random(),da:Math.random()*0.003+0.001,d:Math.random()>0.5?1:-1}));
+const NB=Array.from({length:18},()=>({x:Math.random()*cv.width,y:Math.random()*cv.height,r:Math.random()*100+50,a:Math.random()*0.04+0.01,vx:(Math.random()-0.5)*0.2,vy:(Math.random()-0.5)*0.2,h:Math.random()>0.6?35:270}));
+function draw(){
+  cx.clearRect(0,0,cv.width,cv.height);
+  NB.forEach(n=>{const g=cx.createRadialGradient(n.x,n.y,0,n.x,n.y,n.r);g.addColorStop(0,`hsla(${n.h},55%,38%,${n.a})`);g.addColorStop(1,'transparent');cx.fillStyle=g;cx.fillRect(n.x-n.r,n.y-n.r,n.r*2,n.r*2);n.x+=n.vx;n.y+=n.vy;if(n.x<-n.r)n.x=cv.width+n.r;if(n.x>cv.width+n.r)n.x=-n.r;if(n.y<-n.r)n.y=cv.height+n.r;if(n.y>cv.height+n.r)n.y=-n.r;});
+  ST.forEach(s=>{s.a+=s.da*s.d;if(s.a>1||s.a<0.08)s.d*=-1;cx.beginPath();cx.arc(s.x,s.y,s.r,0,Math.PI*2);cx.fillStyle=`rgba(255,240,200,${s.a})`;cx.fill();});
+  requestAnimationFrame(draw);
+}
+draw();
+window.addEventListener('resize',()=>{cv.width=window.innerWidth;cv.height=window.innerHeight;});
+
+// RIGHT PANEL DATA
+const rpData={
+  welcome:{rr:'rr-welcome'},
+  login:  {rr:'rr-login'},
+  signup: {rr:'rr-signup'},
+  forgot: {rr:'rr-shared',q:'"मन एव मनुष्याणां<br>कारणं बन्धमोक्षयोः"',t:'The mind alone is the cause<br>of bondage and liberation.',s:'— AMRITABINDU UPANISHAD 2'},
+  goals:  {rr:'rr-shared',q:'"स्वधर्मे निधनं श्रेयः<br>परधर्मो भयावहः"',t:'Better to live your own dharma imperfectly<br>than another\'s perfectly.',s:'— BHAGAVAD GITA 3.35'},
+  baseline:{rr:'rr-shared',q:'"धैर्यम् सर्वत्र<br>साधनम्"',t:'Patience is the means<br>to accomplish everything.',s:'— CHANAKYA NITI'}
+};
+
+function goTo(page,btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.sw').forEach(b=>b.classList.remove('active'));
+  document.getElementById('p-'+page).classList.add('active');
+  const map={welcome:0,login:1,signup:2,forgot:3,goals:4,baseline:5};
+  if(btn)btn.classList.add('active');
+  else document.querySelectorAll('.sw')[map[page]]?.classList.add('active');
+  // right panel
+  ['rr-welcome','rr-login','rr-signup','rr-shared'].forEach(id=>document.getElementById(id).style.display='none');
+  const rp=rpData[page];
+  document.getElementById(rp.rr).style.display='block';
+  if(rp.q){document.getElementById('rqs').innerHTML=rp.q;document.getElementById('rqt').innerHTML=rp.t;document.getElementById('rqsr').textContent=rp.s;}
+  // reset forgot
+  if(page==='forgot'){document.getElementById('fform').style.display='block';document.getElementById('fsuccess').classList.remove('on');document.getElementById('fbtn').textContent='SEND RESET LINK';document.getElementById('fbtn').disabled=false;document.getElementById('ferr').classList.remove('on');}
+}
+
+function toggleEye(id,btn){const i=document.getElementById(id);if(i.type==='password'){i.type='text';btn.textContent='🙈';}else{i.type='password';btn.textContent='👁';}}
+function toggleChip(c){const sel=document.querySelectorAll('#p-goals .pchip.sel').length;if(c.classList.contains('sel')&&sel<=2)return;c.classList.toggle('sel');}
+function setLoad(id,on,txt){const b=document.getElementById(id);if(on){b.innerHTML='<span class="sp"></span>PROCESSING...';b.disabled=true;b.style.opacity='0.8';}else{b.textContent=txt;b.disabled=false;b.style.opacity='1';}}
+
+function doLogin(){
+  const e=document.getElementById('le').value.trim(),p=document.getElementById('lp').value,err=document.getElementById('lerr');
+  err.classList.remove('on');
+  if(!e||!p){err.textContent='Please fill in all fields.';err.classList.add('on');return;}
+  setLoad('lbtn',true);
+  setTimeout(()=>{setLoad('lbtn',false,'SIGN IN TO SUTRA');if(p.length<3)err.classList.add('on');else goTo('goals');},1800);
+}
+
+function doSignup(){
+  const n=document.getElementById('sn').value.trim(),e=document.getElementById('se').value.trim(),p=document.getElementById('sp').value,c=document.getElementById('sc').value,err=document.getElementById('serr');
+  err.classList.remove('on');
+  if(!n){err.textContent='Please enter your full name.';err.classList.add('on');return;}
+  if(!e||!e.includes('@')){err.textContent='Please enter a valid email address.';err.classList.add('on');return;}
+  if(p.length<8){err.textContent='Password must be at least 8 characters.';err.classList.add('on');return;}
+  if(p!==c){err.textContent='Passwords do not match. Please try again.';err.classList.add('on');return;}
+  setLoad('sbtn',true);
+  setTimeout(()=>{setLoad('sbtn',false,'CREATE ACCOUNT');goTo('goals');},1800);
+}
+
+function doForgot(){
+  const e=document.getElementById('fe').value.trim(),err=document.getElementById('ferr');
+  err.classList.remove('on');
+  if(!e||!e.includes('@')){err.classList.add('on');return;}
+  setLoad('fbtn',true);
+  setTimeout(()=>{document.getElementById('fform').style.display='none';document.getElementById('fsuccess').classList.add('on');},1600);
+}
+
+function doGoals(){
+  const g1=document.getElementById('g1').value.trim(),sel=document.querySelectorAll('#p-goals .pchip.sel').length,err=document.getElementById('gerr');
+  err.classList.remove('on');
+  if(!g1){err.textContent='Please enter your primary mission.';err.classList.add('on');return;}
+  if(sel<2){err.textContent='Please select at least 2 pillars to track.';err.classList.add('on');return;}
+  goTo('baseline');
+}
+
+function doBaseline(){goTo('welcome');}
+function doGoogle(){setTimeout(()=>goTo('goals'),400);}
+</script>
+</body>
+</html>
