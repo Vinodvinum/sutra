@@ -11,11 +11,11 @@ import {
   Task,
   UserProfile,
 } from "./types";
+import { getPublicEnv } from "./publicEnv";
 
-const supabaseUrl =
-  process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.EXPO_PUBLIC_SUPABASE_URL ?? "";
-const supabaseAnonKey =
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? "";
+const publicEnv = getPublicEnv();
+const supabaseUrl = publicEnv.supabaseUrl;
+const supabaseAnonKey = publicEnv.supabaseAnonKey;
 
 let cachedClient: SupabaseClient | null = null;
 

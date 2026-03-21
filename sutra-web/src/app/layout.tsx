@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Cinzel, Cormorant_Garamond, DM_Sans } from "next/font/google";
 
+import { getSerializedPublicEnv } from "@/lib/publicEnv";
 import "./globals.css";
 
 const cinzel = Cinzel({
@@ -32,9 +33,18 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const serializedPublicEnv = getSerializedPublicEnv();
+
   return (
     <html lang="en" className={`${cinzel.variable} ${cormorant.variable} ${dmSans.variable}`}>
-      <body>{children}</body>
+      <body>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `window.__SUTRA_PUBLIC_ENV__ = ${serializedPublicEnv};`,
+          }}
+        />
+        {children}
+      </body>
     </html>
   );
 }
